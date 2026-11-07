@@ -73,22 +73,22 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {onOpenAddTruck && state.vehicles.length < 2 && (
             <button
               onClick={onOpenAddTruck}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded border border-blue-500 transition-colors shadow-sm self-start sm:self-auto"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded border border-blue-500 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Truck ({state.vehicles.length}/2)</span>
             </button>
           )}
 
           <button
             onClick={onOpenQuickVoucher}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded border border-slate-700 transition-colors shadow-sm self-start sm:self-auto"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded border border-slate-700 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4 flex-shrink-0" />
             <span>Record Vehicle Transaction</span>
           </button>
         </div>
@@ -317,9 +317,9 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
             {onOpenAddTruck && (
               <button
                 onClick={onOpenAddTruck}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-2 shadow-sm transition-colors"
+                className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded flex items-center justify-center gap-2 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 flex-shrink-0" />
                 <span>Add Primary Truck (RJ-xx-xx-xxxx)</span>
               </button>
             )}
@@ -339,9 +339,9 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
             {onOpenAddTruck && (
               <button
                 onClick={onOpenAddTruck}
-                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-1.5 shadow-sm transition-colors"
+                className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 flex-shrink-0" />
                 <span>Add Second Truck</span>
               </button>
             )}

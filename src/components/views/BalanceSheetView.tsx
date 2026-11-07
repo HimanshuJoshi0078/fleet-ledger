@@ -111,12 +111,12 @@ export const BalanceSheetView: React.FC<BalanceSheetViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {/* Sub-tab Toggle */}
-          <div className="bg-slate-100 p-1 rounded border border-slate-300 flex text-xs">
+          <div className="bg-slate-100 p-1 rounded border border-slate-300 flex text-xs w-full sm:w-auto">
             <button
               onClick={() => setActiveTab('BALANCE_SHEET')}
-              className={`px-3 py-1 font-semibold rounded transition-colors ${
+              className={`w-1/2 sm:w-auto px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded transition-colors flex items-center justify-center whitespace-nowrap ${
                 activeTab === 'BALANCE_SHEET'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-slate-200'
@@ -126,7 +126,7 @@ export const BalanceSheetView: React.FC<BalanceSheetViewProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('TRIAL_BALANCE')}
-              className={`px-3 py-1 font-semibold rounded transition-colors ${
+              className={`w-1/2 sm:w-auto px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded transition-colors flex items-center justify-center whitespace-nowrap ${
                 activeTab === 'TRIAL_BALANCE'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-slate-200'
@@ -138,17 +138,17 @@ export const BalanceSheetView: React.FC<BalanceSheetViewProps> = ({
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded border border-slate-700 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded border border-slate-700 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 flex-shrink-0" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={onOpenPrintReport}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded border border-blue-500 transition-colors shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded border border-blue-500 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-4 h-4 flex-shrink-0" />
             <span>Print Report</span>
           </button>
         </div>

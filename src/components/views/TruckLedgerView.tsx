@@ -74,12 +74,12 @@ export const TruckLedgerView: React.FC<TruckLedgerViewProps> = ({
         </div>
 
         {/* Vehicle Selection Buttons */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-md border border-slate-300">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-md border border-slate-300 w-full sm:w-auto">
           {state.vehicles.map(v => (
             <button
               key={v.plateNumber}
               onClick={() => setSelectedPlate(v.plateNumber)}
-              className={`px-3 py-1.5 text-xs font-mono font-bold rounded transition-colors ${
+              className={`px-3.5 py-2 min-h-[42px] text-xs sm:text-sm font-mono font-bold rounded transition-colors flex items-center justify-center w-full sm:w-auto whitespace-nowrap ${
                 selectedPlate === v.plateNumber
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-700 hover:bg-slate-200'
@@ -90,7 +90,7 @@ export const TruckLedgerView: React.FC<TruckLedgerViewProps> = ({
           ))}
           <button
             onClick={() => setSelectedPlate('TOTAL')}
-            className={`px-3 py-1.5 text-xs font-bold rounded transition-colors ${
+            className={`px-3.5 py-2 min-h-[42px] text-xs sm:text-sm font-bold rounded transition-colors flex items-center justify-center w-full sm:w-auto whitespace-nowrap ${
               selectedPlate === 'TOTAL'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-700 hover:bg-slate-200'

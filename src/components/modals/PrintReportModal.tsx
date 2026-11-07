@@ -49,17 +49,18 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
             <span className="font-bold text-base tracking-tight">PRINT FINANCIAL STATEMENT</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={handlePrint}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-1.5 rounded border border-blue-500 shadow-sm flex items-center gap-1.5"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm px-4 py-2 min-h-[42px] rounded border border-blue-500 shadow-sm flex items-center justify-center gap-1.5 whitespace-nowrap"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Document (Ctrl+P)</span>
+              <Printer className="w-4 h-4 flex-shrink-0" />
+              <span>Print Document</span>
             </button>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800"
+              className="text-slate-400 hover:text-white p-2 min-h-[42px] min-w-[42px] rounded hover:bg-slate-800 flex items-center justify-center"
+              aria-label="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
@@ -67,10 +68,10 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
         </div>
 
         {/* Report Selector Tabs (no-print) */}
-        <div className="bg-slate-100 border-b border-slate-300 px-4 py-2 flex gap-2 no-print text-xs">
+        <div className="bg-slate-100 border-b border-slate-300 px-4 py-2 flex flex-wrap gap-2 no-print text-xs">
           <button
             onClick={() => setReportType('MONTHLY_SUMMARY')}
-            className={`px-3 py-1 font-semibold rounded ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded flex items-center justify-center whitespace-nowrap ${
               reportType === 'MONTHLY_SUMMARY'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
@@ -80,7 +81,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
           </button>
           <button
             onClick={() => setReportType('PL_STATEMENT')}
-            className={`px-3 py-1 font-semibold rounded ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded flex items-center justify-center whitespace-nowrap ${
               reportType === 'PL_STATEMENT'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
@@ -90,7 +91,7 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
           </button>
           <button
             onClick={() => setReportType('BALANCE_SHEET')}
-            className={`px-3 py-1 font-semibold rounded ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded flex items-center justify-center whitespace-nowrap ${
               reportType === 'BALANCE_SHEET'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
@@ -474,13 +475,13 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
         </div>
 
         {/* Modal Footer (no-print) */}
-        <div className="px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300 flex justify-between items-center no-print">
-          <span className="text-[11px] text-slate-500 font-mono">
+        <div className="px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300 flex flex-col-reverse sm:flex-row justify-between items-center gap-2 no-print w-full">
+          <span className="text-[11px] text-slate-500 font-mono text-center sm:text-left">
             Optimized for standard A4 landscape or portrait print
           </span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded border border-slate-300"
+            className="w-full sm:w-auto px-5 py-2 min-h-[42px] text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-200 rounded border border-slate-300 flex items-center justify-center transition-colors whitespace-nowrap"
           >
             Close
           </button>

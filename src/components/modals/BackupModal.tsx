@@ -123,7 +123,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
           </p>
 
           {/* Action 1: Export JSON */}
-          <div className="bg-slate-50 p-3.5 rounded border border-slate-300 flex items-center justify-between">
+          <div className="bg-slate-50 p-3.5 rounded border border-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="font-bold text-slate-900">Export Ledger State (JSON)</div>
               <div className="text-[11px] text-slate-500">
@@ -132,22 +132,22 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             </div>
             <button
               onClick={handleDownloadBackup}
-              className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded flex items-center gap-1.5 shadow-sm text-xs"
+              className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded flex items-center justify-center gap-1.5 shadow-sm text-xs sm:text-sm w-full sm:w-auto whitespace-nowrap"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-4 h-4 flex-shrink-0" />
               <span>Export</span>
             </button>
           </div>
 
           {/* Action 2: Import JSON */}
-          <div className="bg-slate-50 p-3.5 rounded border border-slate-300 flex items-center justify-between">
+          <div className="bg-slate-50 p-3.5 rounded border border-slate-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="font-bold text-slate-900">Restore from Backup (JSON)</div>
               <div className="text-[11px] text-slate-500">
                 Select a previously exported FleetLedger backup file to restore.
               </div>
             </div>
-            <div>
+            <div className="w-full sm:w-auto">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -157,16 +157,16 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded flex items-center gap-1.5 shadow-sm text-xs"
+                className="px-4 py-2 min-h-[42px] bg-slate-800 hover:bg-slate-700 text-white font-bold rounded flex items-center justify-center gap-1.5 shadow-sm text-xs sm:text-sm w-full sm:w-auto whitespace-nowrap"
               >
-                <Upload className="w-3.5 h-3.5" />
+                <Upload className="w-4 h-4 flex-shrink-0" />
                 <span>Upload</span>
               </button>
             </div>
           </div>
 
           {/* Action 3: Clear All Data / Reset to Zero */}
-          <div className="bg-rose-50/60 p-3.5 rounded border border-rose-300 flex items-center justify-between">
+          <div className="bg-rose-50/60 p-3.5 rounded border border-rose-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="font-bold text-rose-950">Clear All Data (Reset to Zero)</div>
               <div className="text-[11px] text-slate-600">
@@ -175,15 +175,15 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             </div>
             <button
               onClick={handleClearToZero}
-              className="px-3.5 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold rounded flex items-center gap-1.5 shadow-sm text-xs"
+              className="px-4 py-2 min-h-[42px] bg-rose-700 hover:bg-rose-800 text-white font-bold rounded flex items-center justify-center gap-1.5 shadow-sm text-xs sm:text-sm w-full sm:w-auto whitespace-nowrap"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 className="w-4 h-4 flex-shrink-0" />
               <span>Clear to Zero</span>
             </button>
           </div>
 
           {/* Action 4: Load Benchmark Demo Data */}
-          <div className="bg-slate-50 p-3 rounded border border-slate-200 flex items-center justify-between">
+          <div className="bg-slate-50 p-3 rounded border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="font-bold text-slate-700">Load Benchmark Sample Data</div>
               <div className="text-[11px] text-slate-500">
@@ -192,7 +192,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             </div>
             <button
               onClick={handleLoadDemo}
-              className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded text-xs"
+              className="px-4 py-2 min-h-[42px] bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold rounded text-xs sm:text-sm w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
             >
               Load Demo
             </button>
@@ -200,10 +200,10 @@ export const BackupModal: React.FC<BackupModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300 flex justify-end">
+        <div className="px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300 flex justify-end w-full">
           <button
             onClick={onClose}
-            className="px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 rounded border border-slate-300"
+            className="w-full sm:w-auto px-5 py-2 min-h-[42px] text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-200 rounded border border-slate-300 flex items-center justify-center whitespace-nowrap"
           >
             Close
           </button>

@@ -581,7 +581,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
                   setActiveType(item.id);
                   setErrorMessage('');
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 min-h-[38px] text-xs font-medium rounded transition-colors whitespace-nowrap ${
                   isSelected
                     ? 'bg-blue-600 text-white shadow-sm font-semibold'
                     : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-300'
@@ -1320,21 +1320,21 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="flex items-center justify-between px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300">
-          <div className="text-[11px] text-slate-500 font-mono">
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300 w-full">
+          <div className="text-[11px] text-slate-500 font-mono text-center sm:text-left">
             Voucher automatically posts balanced Dr/Cr lines into the general ledger
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col-reverse sm:flex-row items-center gap-2 w-full sm:w-auto">
             <button
               onClick={onClose}
-              className="px-3.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200 rounded border border-slate-300"
+              className="w-full sm:w-auto px-4 py-2 min-h-[42px] text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-200 rounded border border-slate-300 flex items-center justify-center transition-colors whitespace-nowrap"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded border border-blue-500 shadow-sm"
+              className="w-full sm:w-auto px-5 py-2 min-h-[42px] text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded border border-blue-500 shadow-sm flex items-center justify-center transition-colors whitespace-nowrap"
             >
               Post Voucher
             </button>

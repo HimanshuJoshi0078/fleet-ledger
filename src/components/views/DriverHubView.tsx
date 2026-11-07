@@ -61,40 +61,40 @@ export const DriverHubView: React.FC<DriverHubViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {onOpenAddDriver && (
             <button
               onClick={onOpenAddDriver}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded border border-blue-500 transition-colors shadow-sm self-start sm:self-auto"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded border border-blue-500 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Commercial Driver</span>
             </button>
           )}
 
           <button
             onClick={onOpenQuickVoucher}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded border border-slate-700 transition-colors shadow-sm self-start sm:self-auto"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded border border-slate-700 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4 flex-shrink-0" />
             <span>New Driver Entry</span>
           </button>
         </div>
       </div>
 
       {/* Driver Select Tabs */}
-      <div className="flex gap-2 border-b border-slate-300 pb-2">
+      <div className="flex gap-2 border-b border-slate-300 pb-2 overflow-x-auto">
         {state.drivers.map(d => (
           <button
             key={d.id}
             onClick={() => setSelectedDriverId(d.id)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg border transition-colors flex items-center gap-2 ${
+            className={`px-4 py-2 min-h-[42px] text-xs font-bold rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ${
               selectedDriverId === d.id
                 ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                 : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
             }`}
           >
-            <Users className="w-4 h-4 text-blue-400" />
+            <Users className="w-4 h-4 text-blue-400 flex-shrink-0" />
             <span>{d.fullName}</span>
             <span className="font-mono text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-normal">
               {d.assignedPlateNumber}
@@ -118,9 +118,9 @@ export const DriverHubView: React.FC<DriverHubViewProps> = ({
           {onOpenAddDriver && (
             <button
               onClick={onOpenAddDriver}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-2 shadow-sm transition-colors"
+              className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded flex items-center justify-center gap-2 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Add Commercial Driver</span>
             </button>
           )}
@@ -145,28 +145,28 @@ export const DriverHubView: React.FC<DriverHubViewProps> = ({
               </div>
 
               {/* Action Buttons for this driver */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => onTriggerVoucherWithType('DRIVER_ADVANCE', selectedDriver.id)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 font-semibold text-xs flex items-center gap-1"
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 min-h-[42px] w-full sm:w-auto whitespace-nowrap"
                 >
-                  <Wallet className="w-3.5 h-3.5 text-amber-400" />
+                  <Wallet className="w-4 h-4 text-amber-400 flex-shrink-0" />
                   <span>Give Advance</span>
                 </button>
 
                 <button
                   onClick={() => onTriggerVoucherWithType('DRIVER_BHATTA', selectedDriver.id)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 font-semibold text-xs flex items-center gap-1"
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 min-h-[42px] w-full sm:w-auto whitespace-nowrap"
                 >
-                  <Utensils className="w-3.5 h-3.5 text-emerald-400" />
+                  <Utensils className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                   <span>Pay Bhatta</span>
                 </button>
 
                 <button
                   onClick={() => onTriggerVoucherWithType('SALARY_PAYMENT', selectedDriver.id)}
-                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded border border-blue-500 font-bold text-xs flex items-center gap-1 shadow-sm"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded border border-blue-500 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
                   <span>Settle Salary</span>
                 </button>
               </div>

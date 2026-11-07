@@ -36,10 +36,10 @@ export const StaticPagesView: React.FC<StaticPagesViewProps> = ({ state, onReset
         </div>
 
         {/* Section Navigation Tabs */}
-        <div className="flex bg-slate-100 p-1 rounded-md border border-slate-300 text-xs overflow-x-auto">
+        <div className="flex flex-wrap sm:flex-nowrap bg-slate-100 p-1 rounded-md border border-slate-300 text-xs overflow-x-auto w-full sm:w-auto gap-1">
           <button
             onClick={() => setActiveSection('PRIVACY')}
-            className={`px-3 py-1.5 font-semibold rounded transition-colors whitespace-nowrap ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded transition-colors whitespace-nowrap flex items-center justify-center flex-1 sm:flex-initial ${
               activeSection === 'PRIVACY'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-700 hover:bg-slate-200'
@@ -49,7 +49,7 @@ export const StaticPagesView: React.FC<StaticPagesViewProps> = ({ state, onReset
           </button>
           <button
             onClick={() => setActiveSection('TERMS')}
-            className={`px-3 py-1.5 font-semibold rounded transition-colors whitespace-nowrap ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded transition-colors whitespace-nowrap flex items-center justify-center flex-1 sm:flex-initial ${
               activeSection === 'TERMS'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-700 hover:bg-slate-200'
@@ -59,7 +59,7 @@ export const StaticPagesView: React.FC<StaticPagesViewProps> = ({ state, onReset
           </button>
           <button
             onClick={() => setActiveSection('DOMAIN_MAPPING')}
-            className={`px-3 py-1.5 font-semibold rounded transition-colors whitespace-nowrap ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded transition-colors whitespace-nowrap flex items-center justify-center flex-1 sm:flex-initial ${
               activeSection === 'DOMAIN_MAPPING'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-700 hover:bg-slate-200'
@@ -69,7 +69,7 @@ export const StaticPagesView: React.FC<StaticPagesViewProps> = ({ state, onReset
           </button>
           <button
             onClick={() => setActiveSection('SYSTEM_INFO')}
-            className={`px-3 py-1.5 font-semibold rounded transition-colors whitespace-nowrap ${
+            className={`px-3.5 py-2 min-h-[42px] font-semibold text-xs sm:text-sm rounded transition-colors whitespace-nowrap flex items-center justify-center flex-1 sm:flex-initial ${
               activeSection === 'SYSTEM_INFO'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-700 hover:bg-slate-200'
@@ -325,7 +325,7 @@ export const StaticPagesView: React.FC<StaticPagesViewProps> = ({ state, onReset
                     onResetToZero();
                   }
                 }}
-                className="px-3.5 py-1.5 bg-rose-700 hover:bg-rose-800 text-white rounded text-xs font-bold transition-colors shadow-sm"
+                className="px-4 py-2 min-h-[42px] bg-rose-700 hover:bg-rose-800 text-white rounded text-xs sm:text-sm font-bold transition-colors shadow-sm w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
               >
                 Clear All Data (Reset to Zero)
               </button>

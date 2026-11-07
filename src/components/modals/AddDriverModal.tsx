@@ -212,19 +212,19 @@ export const AddDriverModal: React.FC<AddDriverModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between pt-3 border-t border-slate-300">
+          <div className="flex flex-col-reverse sm:flex-row items-center sm:justify-between gap-2 pt-3 border-t border-slate-300 w-full">
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 rounded border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs"
+              className="w-full sm:w-auto px-4 py-2 min-h-[42px] rounded border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-xs sm:text-sm flex items-center justify-center transition-colors whitespace-nowrap"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-1.5 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs border border-blue-500 shadow-sm flex items-center gap-1.5"
+              className="w-full sm:w-auto px-5 py-2 min-h-[42px] rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm border border-blue-500 shadow-sm flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4 flex-shrink-0" />
               <span>Save Driver Profile</span>
             </button>
           </div>

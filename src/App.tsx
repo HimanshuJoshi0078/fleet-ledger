@@ -35,6 +35,7 @@ export const App: React.FC = () => {
   const [isAddDriverOpen, setIsAddDriverOpen] = useState<boolean>(false);
   const [isDailyEntryOpen, setIsDailyEntryOpen] = useState<boolean>(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState<boolean>(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
 
   // Keyboard shortcut F2 to open Voucher Entry (classic Tally standard)
   useEffect(() => {
@@ -281,20 +282,23 @@ export const App: React.FC = () => {
         }}
         onOpenPrintReport={() => setIsPrintModalOpen(true)}
         onOpenBackupModal={() => setIsBackupModalOpen(true)}
+        onToggleMobileNav={() => setIsMobileNavOpen(prev => !prev)}
       />
 
       {/* Main Layout Area */}
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+      <div className="flex-1 flex max-w-7xl w-full mx-auto relative">
         {/* Left ERP Sidebar Navigation */}
         <Sidebar
           activeTab={activeTab}
           onSelectTab={setActiveTab}
           truckAPlate={truckAPlate}
           truckBPlate={truckBPlate}
+          isOpenMobile={isMobileNavOpen}
+          onCloseMobile={() => setIsMobileNavOpen(false)}
         />
 
         {/* Center Content View Canvas */}
-        <main className="flex-1 p-3 sm:p-5 lg:p-6 overflow-y-auto">
+        <main className="flex-1 w-full min-w-0 p-3 sm:p-5 lg:p-6 overflow-y-auto">
           {activeTab === 'dashboard' && (
             <DashboardView
               state={state}

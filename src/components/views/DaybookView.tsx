@@ -129,14 +129,14 @@ export const DaybookView: React.FC<DaybookViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {onOpenBulkImport && (
             <button
               onClick={onOpenBulkImport}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded border border-slate-700 transition-colors shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded border border-slate-700 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
               title="Bulk Import CSV / Excel / Tally"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-blue-400" />
+              <FileSpreadsheet className="w-4 h-4 text-blue-400 flex-shrink-0" />
               <span>Bulk Import / Sync</span>
             </button>
           )}
@@ -144,27 +144,27 @@ export const DaybookView: React.FC<DaybookViewProps> = ({
           {onOpenDailyEntry && (
             <button
               onClick={onOpenDailyEntry}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold rounded border border-blue-600 transition-colors shadow-sm"
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs sm:text-sm font-semibold rounded border border-blue-600 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
               title="All-in-one daily trip sheet"
             >
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="w-4 h-4 flex-shrink-0" />
               <span>Daily Sheet Entry</span>
             </button>
           )}
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded border border-slate-700 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded border border-slate-700 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 flex-shrink-0" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={onOpenQuickVoucher}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded border border-blue-500 transition-colors shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded border border-blue-500 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4 flex-shrink-0" />
             <span>Add Voucher</span>
           </button>
         </div>
@@ -254,14 +254,14 @@ export const DaybookView: React.FC<DaybookViewProps> = ({
         </div>
 
         {/* Quick Date Shortcuts */}
-        <div className="flex items-center gap-2 pt-1 border-t border-slate-100 text-[11px]">
-          <span className="text-slate-500">Quick Filters:</span>
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-[11px]">
+          <span className="text-slate-500 font-medium">Quick Filters:</span>
           <button
             onClick={() => {
               setStartDate('');
               setEndDate('');
             }}
-            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-2.5 py-1.5 min-h-[36px] rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
           >
             All Dates
           </button>
@@ -271,7 +271,7 @@ export const DaybookView: React.FC<DaybookViewProps> = ({
               setStartDate(today);
               setEndDate(today);
             }}
-            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-2.5 py-1.5 min-h-[36px] rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
           >
             Today
           </button>
@@ -282,7 +282,7 @@ export const DaybookView: React.FC<DaybookViewProps> = ({
               setStartDate(firstDay);
               setEndDate('');
             }}
-            className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-2.5 py-1.5 min-h-[36px] rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
           >
             Current Month (Nov 2026)
           </button>

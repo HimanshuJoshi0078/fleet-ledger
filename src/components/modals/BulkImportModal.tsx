@@ -507,9 +507,9 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
 
             <button
               onClick={handleDownloadTemplate}
-              className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded border border-slate-700 flex items-center gap-1.5 shadow-sm text-xs self-start sm:self-auto"
+              className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded border border-slate-700 flex items-center justify-center gap-1.5 shadow-sm text-xs sm:text-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
             >
-              <Download className="w-3.5 h-3.5 text-blue-400" />
+              <Download className="w-4 h-4 text-blue-400 flex-shrink-0" />
               <span>Download Sample CSV Template</span>
             </button>
           </div>
@@ -534,7 +534,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-1 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded shadow-sm text-xs"
+                className="mt-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded shadow-sm text-xs sm:text-sm min-h-[42px] w-full sm:w-auto flex items-center justify-center whitespace-nowrap"
               >
                 Browse File
               </button>
@@ -607,11 +607,11 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300">
+        <div className="flex flex-col-reverse sm:flex-row items-center sm:justify-between gap-2 px-5 py-3 bg-slate-100 rounded-b-lg border-t border-slate-300 w-full">
           <button
             type="button"
             onClick={onClose}
-            className="px-3.5 py-1.5 rounded border border-slate-300 text-slate-700 hover:bg-slate-200 font-semibold text-xs"
+            className="w-full sm:w-auto px-4 py-2 min-h-[42px] rounded border border-slate-300 text-slate-700 hover:bg-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center transition-colors whitespace-nowrap"
           >
             Cancel
           </button>
@@ -621,9 +621,9 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
               type="button"
               onClick={handleImport}
               disabled={validCount === 0}
-              className="px-5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded shadow-sm text-xs flex items-center gap-1.5"
+              className="w-full sm:w-auto px-5 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold rounded shadow-sm text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap"
             >
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
               <span>Import &amp; Synchronize {validCount} Entries</span>
             </button>
           )}

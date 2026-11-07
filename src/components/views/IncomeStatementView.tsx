@@ -86,20 +86,20 @@ export const IncomeStatementView: React.FC<IncomeStatementViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded border border-slate-700 transition-colors"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold rounded border border-slate-700 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 flex-shrink-0" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={onOpenPrintReport}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded border border-blue-500 transition-colors shadow-sm"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded border border-blue-500 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
           >
-            <Printer className="w-3.5 h-3.5" />
+            <Printer className="w-4 h-4 flex-shrink-0" />
             <span>Print P&amp;L</span>
           </button>
         </div>
@@ -126,13 +126,13 @@ export const IncomeStatementView: React.FC<IncomeStatementViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-[11px]">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] w-full sm:w-auto">
           <button
             onClick={() => {
               setStartDate('');
               setEndDate('');
             }}
-            className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-3 py-1.5 min-h-[36px] rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
           >
             All Entries
           </button>
@@ -143,7 +143,7 @@ export const IncomeStatementView: React.FC<IncomeStatementViewProps> = ({
               setStartDate(firstDay);
               setEndDate('');
             }}
-            className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700"
+            className="px-3 py-1.5 min-h-[36px] rounded bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors"
           >
             Current Month (Nov 2026)
           </button>

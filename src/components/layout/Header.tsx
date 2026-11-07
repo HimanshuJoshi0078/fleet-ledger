@@ -11,7 +11,8 @@ import {
   CreditCard,
   Wallet,
   Receipt,
-  FileCheck
+  FileCheck,
+  Menu
 } from 'lucide-react';
 import { formatINR } from '../../services/formatters';
 import { AppState } from '../../services/storage';
@@ -21,6 +22,7 @@ interface HeaderProps {
   onOpenQuickVoucher: () => void;
   onOpenPrintReport: () => void;
   onOpenBackupModal: () => void;
+  onToggleMobileNav?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenQuickVoucher,
   onOpenPrintReport,
   onOpenBackupModal,
+  onToggleMobileNav,
 }) => {
   // Compute top bar quick balances
   const cashAcc = state.accounts.find(a => a.code === '1100');
@@ -67,14 +70,25 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Company Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-blue-600 flex items-center justify-center text-white shadow-inner font-bold border border-blue-400">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {onToggleMobileNav && (
+              <button
+                type="button"
+                onClick={onToggleMobileNav}
+                className="md:hidden p-2 rounded text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700 min-h-[42px] min-w-[42px] flex items-center justify-center transition-colors focus:outline-none"
+                aria-label="Toggle navigation menu"
+                title="Toggle navigation menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
+            <div className="w-10 h-10 rounded bg-blue-600 flex items-center justify-center text-white shadow-inner font-bold border border-blue-400 flex-shrink-0">
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold tracking-tight text-white text-base sm:text-lg">FLEETLEDGER ERP</span>
-                <span className="bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded font-mono border border-slate-700">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-bold tracking-tight text-white text-sm sm:text-base lg:text-lg whitespace-nowrap">FLEETLEDGER ERP</span>
+                <span className="bg-slate-800 text-slate-300 text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded font-mono border border-slate-700 whitespace-nowrap">
                   FY 2026-27
                 </span>
               </div>
@@ -143,32 +157,32 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={onOpenQuickVoucher}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 rounded flex items-center gap-1.5 transition-colors border border-blue-500 shadow-sm active:translate-y-0.5"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 min-h-[42px] rounded flex items-center justify-center gap-1.5 transition-colors border border-blue-500 shadow-sm active:translate-y-0.5 whitespace-nowrap"
               title="Record any trip transaction or double-entry voucher"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <Plus className="w-4 h-4 stroke-[2.5] flex-shrink-0" />
               <span className="hidden sm:inline">New Voucher</span>
-              <span className="sm:hidden">Entry</span>
+              <span className="sm:hidden font-semibold">Entry</span>
             </button>
 
             <button
               onClick={onOpenPrintReport}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 sm:px-3 py-2 rounded border border-slate-700 flex items-center gap-1.5 transition-colors"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm px-2.5 sm:px-3 py-2 min-h-[42px] rounded border border-slate-700 flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap"
               title="Generate printable statement"
             >
-              <Printer className="w-4 h-4 text-slate-400" />
+              <Printer className="w-4 h-4 text-slate-400 flex-shrink-0" />
               <span className="hidden md:inline">Print Report</span>
             </button>
 
             <button
               onClick={onOpenBackupModal}
-              className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 sm:px-3 py-2 rounded border border-slate-700 flex items-center gap-1.5 transition-colors"
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm px-2.5 sm:px-3 py-2 min-h-[42px] rounded border border-slate-700 flex items-center justify-center gap-1.5 transition-colors whitespace-nowrap"
               title="Export, import, or reset ledger state"
             >
-              <FileCheck className="w-4 h-4 text-slate-400" />
+              <FileCheck className="w-4 h-4 text-slate-400 flex-shrink-0" />
               <span className="hidden lg:inline">Data / Backup</span>
             </button>
           </div>
