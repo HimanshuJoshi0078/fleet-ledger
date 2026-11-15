@@ -7,12 +7,14 @@ import {
   Scale,
   Calendar,
   FileSpreadsheet,
-  Plus
+  Plus,
+  AlertTriangle
 } from 'lucide-react';
 import { AppState } from '../../services/storage';
 import {
   generateIncomeStatement,
-  generateBalanceSheet
+  generateBalanceSheet,
+  getComplianceAlerts
 } from '../../services/accountingEngine';
 import { formatINR, formatPercent, formatDate, formatKm } from '../../services/formatters';
 
@@ -35,6 +37,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 }) => {
   const { breakdowns, consolidated } = generateIncomeStatement(state.journalEntries, state.vehicles);
   const balanceSheet = generateBalanceSheet(state.accounts, state.journalEntries, state.vehicles);
+  const complianceAlerts = getComplianceAlerts(state.vehicles);
 
   const truckA = state.vehicles[0];
   const truckB = state.vehicles[1];
@@ -102,6 +105,63 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* RTO Document Expiry Compliance Alerts */}
+      {complianceAlerts.length > 0 && (
+        <div className="bg-white rounded-lg border border-amber-300 shadow-sm overflow-hidden text-xs">
+          <div className="bg-amber-50 px-4 py-2.5 border-b border-amber-200 flex items-center justify-between">
+            <div className="flex items-center gap-2 font-bold text-amber-950">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>RTO &amp; Document Compliance Alerts ({complianceAlerts.length})</span>
+            </div>
+            <button
+              onClick={() => onSelectTab('fleet_master')}
+              className="text-[11px] font-mono text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded border border-amber-300 font-semibold"
+            >
+              Manage Fleet Documents &rarr;
+            </button>
+          </div>
+          <div className="p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              {complianceAlerts.map((alert, idx) => {
+                const isExpired = alert.daysRemaining < 0;
+                return (
+                  <div
+                    key={`${alert.vehiclePlate}-${alert.documentType}-${idx}`}
+                    className={`p-2.5 rounded border flex flex-col justify-between ${
+                      isExpired
+                        ? 'bg-rose-50/60 border-rose-300 text-rose-950'
+                        : 'bg-amber-50/60 border-amber-300 text-amber-950'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono font-bold text-xs">{alert.vehiclePlate}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider ${
+                          isExpired
+                            ? 'bg-rose-200 text-rose-900 border border-rose-300'
+                            : 'bg-amber-200 text-amber-900 border border-amber-300'
+                        }`}
+                      >
+                        {isExpired ? 'EXPIRED' : 'EXPIRING SOON'}
+                      </span>
+                    </div>
+                    <div className="font-medium text-xs text-slate-800">{alert.documentName}</div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-600 mt-1.5 pt-1.5 border-t border-slate-200/60">
+                      <span>Expiry: {formatDate(alert.expiryDate)}</span>
+                      <span className={`font-mono font-bold ${isExpired ? 'text-rose-700' : 'text-amber-800'}`}>
+                        {isExpired
+                          ? `Overdue: ${Math.abs(alert.daysRemaining)} days`
+                          : `In ${alert.daysRemaining} days`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Primary KPI Grid (High Contrast Utilitarian Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">

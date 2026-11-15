@@ -47,6 +47,8 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
   const [nationalPermitNumber, setNationalPermitNumber] = useState<string>('NP-RJ-' + Math.floor(1000 + Math.random() * 9000));
   const [nationalPermitExpiryDate, setNationalPermitExpiryDate] = useState<string>('2027-12-31');
   const [fitnessCertificateExpiryDate, setFitnessCertificateExpiryDate] = useState<string>('2027-10-31');
+  const [pucExpiryDate, setPucExpiryDate] = useState<string>('2027-06-30');
+  const [roadTaxExpiryDate, setRoadTaxExpiryDate] = useState<string>('2027-12-31');
   const [fastagTagId, setFastagTagId] = useState<string>('34161FA8' + Math.floor(10000000 + Math.random() * 90000000));
 
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -96,6 +98,8 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
       nationalPermitNumber: nationalPermitNumber.trim() || 'N/A',
       nationalPermitExpiryDate: nationalPermitExpiryDate || '2027-12-31',
       fitnessCertificateExpiryDate: fitnessCertificateExpiryDate || '2027-12-31',
+      pucExpiryDate: pucExpiryDate || '2027-12-31',
+      roadTaxExpiryDate: roadTaxExpiryDate || '2027-12-31',
       fastagTagId: fastagTagId.trim() || 'N/A',
       currentOdometerKm: Number(currentOdometerKm) || 0,
       operationalStatus: 'IDLE',
@@ -330,7 +334,7 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
               4. RTO Compliance Expiry Dates
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Insurance Expiry Date</label>
                 <input
@@ -342,7 +346,7 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">National Permit Expiry Date</label>
+                <label className="block text-slate-700 font-semibold mb-1">National/State Permit Expiry</label>
                 <input
                   type="date"
                   value={nationalPermitExpiryDate}
@@ -352,11 +356,31 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Fitness Certificate Expiry Date</label>
+                <label className="block text-slate-700 font-semibold mb-1">Fitness Certificate Expiry</label>
                 <input
                   type="date"
                   value={fitnessCertificateExpiryDate}
                   onChange={e => setFitnessCertificateExpiryDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">PUC (Pollution) Expiry</label>
+                <input
+                  type="date"
+                  value={pucExpiryDate}
+                  onChange={e => setPucExpiryDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Road Tax Expiry Date</label>
+                <input
+                  type="date"
+                  value={roadTaxExpiryDate}
+                  onChange={e => setRoadTaxExpiryDate(e.target.value)}
                   className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
                 />
               </div>

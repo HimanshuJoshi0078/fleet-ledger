@@ -614,3 +614,169 @@ export function calculateClientLedger(
   };
 }
 
+/**
+ * Compliance Expiry Alert Model & Scanner
+ */
+export interface ComplianceAlertItem {
+  plateNumber: string;
+  vehiclePlate: string;
+  documentType: string;
+  documentName: string;
+  expiryDate: string;
+  daysRemaining: number;
+  status: 'EXPIRED' | 'EXPIRING_SOON';
+}
+
+/**
+ * Automatically scans all trucks' document dates against the current date.
+ * Returns alerts ONLY when any document is Expired (< 0 days) or Expiring Soon (<= 15 days).
+ */
+export function getComplianceAlerts(vehicles: VehicleProfile[]): ComplianceAlertItem[] {
+  const alerts: ComplianceAlertItem[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const docsToCheck: { key: keyof VehicleProfile; name: string }[] = [
+    { key: 'insuranceExpiryDate', name: 'Insurance Policy' },
+    { key: 'fitnessCertificateExpiryDate', name: 'Fitness Certificate' },
+    { key: 'nationalPermitExpiryDate', name: 'National/State Permit' },
+    { key: 'pucExpiryDate', name: 'PUC (Pollution)' },
+    { key: 'roadTaxExpiryDate', name: 'Road Tax Token' },
+  ];
+
+  for (const v of vehicles) {
+    for (const doc of docsToCheck) {
+      const expiryStr = v[doc.key] as string | undefined;
+      if (!expiryStr || typeof expiryStr !== 'string' || expiryStr.trim() === '') continue;
+
+      const expDate = new Date(expiryStr);
+      if (isNaN(expDate.getTime())) continue;
+      expDate.setHours(0, 0, 0, 0);
+
+      const diffTime = expDate.getTime() - today.getTime();
+      const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (daysRemaining < 0) {
+        alerts.push({
+          plateNumber: v.plateNumber,
+          vehiclePlate: v.plateNumber,
+          documentType: doc.key as string,
+          documentName: doc.name,
+          expiryDate: expiryStr,
+          daysRemaining,
+          status: 'EXPIRED',
+        });
+      } else if (daysRemaining <= 15) {
+        alerts.push({
+          plateNumber: v.plateNumber,
+          vehiclePlate: v.plateNumber,
+          documentType: doc.key as string,
+          documentName: doc.name,
+          expiryDate: expiryStr,
+          daysRemaining,
+          status: 'EXPIRING_SOON',
+        });
+      }
+    }
+  }
+
+  return alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
+}
+
+/**
+ * Odometer & Mileage (KMPL) Tracking Model & Computation
+ */
+export interface FuelMileageMetric {
+  entryId: string;
+  vehiclePlate: string;
+  odometer: number;
+  previousOdometer: number | null;
+  distanceKm: number | null;
+  liters: number;
+  kmpl: number | null;
+}
+
+export function calculateFleetFuelMileage(entries: JournalEntry[]): {
+  metricsByEntryId: Record<string, FuelMileageMetric>;
+  averageKmplByPlate: Record<string, number | null>;
+} {
+  const entriesByPlate: Record<string, JournalEntry[]> = {};
+
+  for (const entry of entries) {
+    if (entry.voucherType === 'DIESEL_SLIP' && entry.vehiclePlate && entry.vehiclePlate !== 'COMPANY') {
+      if (!entriesByPlate[entry.vehiclePlate]) {
+        entriesByPlate[entry.vehiclePlate] = [];
+      }
+      entriesByPlate[entry.vehiclePlate].push(entry);
+    }
+  }
+
+  const metricsByEntryId: Record<string, FuelMileageMetric> = {};
+  const averageKmplByPlate: Record<string, number | null> = {};
+
+  for (const plate in entriesByPlate) {
+    // Sort chronologically by date ascending, then voucher/time
+    const plateEntries = [...entriesByPlate[plate]].sort((a, b) => {
+      const dCmp = a.date.localeCompare(b.date);
+      if (dCmp !== 0) return dCmp;
+      return (a.voucherNumber || a.id).localeCompare(b.voucherNumber || b.id);
+    });
+
+    let prevOdo: number | null = null;
+    let totalValidDist = 0;
+    let totalValidLiters = 0;
+
+    for (const entry of plateEntries) {
+      const currentOdo = entry.metadata?.odometer;
+      const liters = entry.metadata?.liters || 0;
+
+      if (typeof currentOdo === 'number' && currentOdo > 0) {
+        if (prevOdo !== null && currentOdo > prevOdo && liters > 0) {
+          const distanceKm = currentOdo - prevOdo;
+          const kmpl = Math.round((distanceKm / liters) * 100) / 100;
+          metricsByEntryId[entry.id] = {
+            entryId: entry.id,
+            vehiclePlate: plate,
+            odometer: currentOdo,
+            previousOdometer: prevOdo,
+            distanceKm,
+            liters,
+            kmpl,
+          };
+          totalValidDist += distanceKm;
+          totalValidLiters += liters;
+        } else {
+          metricsByEntryId[entry.id] = {
+            entryId: entry.id,
+            vehiclePlate: plate,
+            odometer: currentOdo,
+            previousOdometer: prevOdo,
+            distanceKm: null,
+            liters,
+            kmpl: null,
+          };
+        }
+        prevOdo = currentOdo;
+      } else {
+        metricsByEntryId[entry.id] = {
+          entryId: entry.id,
+          vehiclePlate: plate,
+          odometer: 0,
+          previousOdometer: null,
+          distanceKm: null,
+          liters,
+          kmpl: null,
+        };
+      }
+    }
+
+    if (totalValidLiters > 0 && totalValidDist > 0) {
+      averageKmplByPlate[plate] = Math.round((totalValidDist / totalValidLiters) * 100) / 100;
+    } else {
+      averageKmplByPlate[plate] = null;
+    }
+  }
+
+  return { metricsByEntryId, averageKmplByPlate };
+}
+

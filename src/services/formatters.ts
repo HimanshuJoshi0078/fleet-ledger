@@ -83,6 +83,11 @@ export function formatKm(km: number | undefined | null): string {
   return `${new Intl.NumberFormat('en-IN').format(km)} km`;
 }
 
+export function formatKMPL(kmpl: number | undefined | null): string {
+  if (kmpl === undefined || kmpl === null || isNaN(kmpl)) return '-';
+  return `${kmpl.toFixed(2)} KMPL`;
+}
+
 /**
  * Standard Indian Commercial Vehicle License Plate Validation
  * Matches formats such as: RJ-14-GB-1001, RJ14GB1001, RJ-14-EA-2020, DL-01-A-1234

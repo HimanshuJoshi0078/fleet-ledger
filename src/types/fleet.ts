@@ -19,6 +19,8 @@ export interface VehicleProfile {
   nationalPermitNumber: string;
   nationalPermitExpiryDate: string;
   fitnessCertificateExpiryDate: string;
+  pucExpiryDate?: string;      // "YYYY-MM-DD"
+  roadTaxExpiryDate?: string;  // "YYYY-MM-DD"
   fastagTagId: string;
   currentOdometerKm: number;
   operationalStatus: 'ACTIVE_TRIP' | 'LOADING' | 'UNLOADING' | 'WORKSHOP' | 'IDLE';

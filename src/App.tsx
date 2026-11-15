@@ -462,6 +462,7 @@ export const App: React.FC = () => {
                 setIsVoucherModalOpen(true);
               }}
               onTriggerVoucherWithType={handleTriggerVoucherWithType}
+              onSaveEntry={handleSaveEntry}
             />
           )}
 

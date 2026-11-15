@@ -49,6 +49,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   // Fuel Expense
   const [fuelLiters, setFuelLiters] = useState<number>(0);
   const [fuelRate, setFuelRate] = useState<number>(90.5);
+  const [fuelOdometer, setFuelOdometer] = useState<string>('');
   const [pumpName, setPumpName] = useState<string>('');
   const [fuelPaymentMode, setFuelPaymentMode] = useState<'CREDIT' | 'CASH' | 'BANK'>('CREDIT');
 
@@ -202,6 +203,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
         metadata: {
           liters: fuelLiters,
           fuelRate,
+          odometer: fuelOdometer ? Number(fuelOdometer) : undefined,
         },
         createdAt: new Date().toISOString(),
       });
@@ -493,7 +495,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
                 <div>
                   <label className="block text-slate-700 text-[11px] mb-0.5">Liters Pumped</label>
                   <input
@@ -513,6 +515,18 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                     step="0.05"
                     value={fuelRate}
                     onChange={e => setFuelRate(parseFloat(e.target.value) || 0)}
+                    className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 text-[11px] mb-0.5">Odometer Reading (KM)</label>
+                  <input
+                    type="number"
+                    step="1"
+                    placeholder="e.g. 148500"
+                    value={fuelOdometer}
+                    onChange={e => setFuelOdometer(e.target.value)}
                     className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
                   />
                 </div>

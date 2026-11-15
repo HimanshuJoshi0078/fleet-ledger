@@ -13,7 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { AppState } from '../../services/storage';
-import { generateIncomeStatement } from '../../services/accountingEngine';
+import { generateIncomeStatement, calculateFleetFuelMileage } from '../../services/accountingEngine';
 import { formatINR, formatPercent, formatDate, formatMT, formatKm } from '../../services/formatters';
 
 interface TruckLedgerViewProps {
@@ -46,6 +46,8 @@ export const TruckLedgerView: React.FC<TruckLedgerViewProps> = ({
   const currentBreakdown = effectivePlate === 'TOTAL'
     ? consolidated
     : breakdowns[effectivePlate] || consolidated;
+
+  const mileageMetrics = calculateFleetFuelMileage(state.journalEntries);
 
   // Filter transactions tagged specifically to this truck
   const vehicleEntries = state.journalEntries.filter(
@@ -390,7 +392,14 @@ export const TruckLedgerView: React.FC<TruckLedgerViewProps> = ({
                         {entry.voucherNumber}
                       </td>
                       <td className="py-2 px-3 font-sans text-slate-600 whitespace-nowrap">
-                        {entry.voucherType}
+                        <div className="flex items-center gap-1.5">
+                          <span>{entry.voucherType}</span>
+                          {entry.voucherType === 'DIESEL_SLIP' && mileageMetrics.metricsByEntryId[entry.id]?.kmpl && (
+                            <span className="px-1.5 py-0.5 rounded font-mono text-[9px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                              {mileageMetrics.metricsByEntryId[entry.id].kmpl?.toFixed(2)} KMPL
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-2 px-3 text-slate-600 whitespace-nowrap">
                         {entry.referenceNumber || '-'}
