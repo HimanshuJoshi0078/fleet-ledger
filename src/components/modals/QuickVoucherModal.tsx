@@ -34,8 +34,6 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
   onSaveEntry,
   defaultVoucherType = 'FREIGHT_BILL',
 }) => {
-  if (!isOpen) return null;
-
   const [activeType, setActiveType] = useState<VoucherType>(defaultVoucherType);
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [vehiclePlate, setVehiclePlate] = useState<string>(state.vehicles[0]?.plateNumber || '');
@@ -96,6 +94,8 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
 
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  if (!isOpen) return null;
+
   // Handle building double-entry journal lines dynamically based on activeType
   const handleSave = () => {
     setErrorMessage('');
@@ -104,8 +104,13 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
     let autoRef = referenceNumber.trim();
     let meta: JournalEntry['metadata'] = {};
 
-    const isTruckA = state.vehicles.length > 0 ? (vehiclePlate === state.vehicles[0]?.plateNumber) : true;
-    const truckSuffix = isTruckA ? '1001' : '1002';
+    const truckIndex = state.vehicles.findIndex(v => v.plateNumber === vehiclePlate);
+    const safeTruckIdx = truckIndex >= 0 ? truckIndex : 0;
+    const suffix = String(safeTruckIdx + 1).padStart(2, '0');
+
+    const drvIndex = state.drivers.findIndex(d => d.id === driverId);
+    const safeDrvIdx = drvIndex >= 0 ? drvIndex : 0;
+    const drvSuffix = String(safeDrvIdx + 1).padStart(2, '0');
 
     if (activeType === 'FREIGHT_BILL') {
       const totalFreight = cargoWeightMT * freightRatePerMT;
@@ -114,7 +119,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         return;
       }
       const client = state.clients.find(c => c.id === clientId);
-      const revenueCode = isTruckA ? '4101' : '4102';
+      const revenueCode = `41${suffix}`;
       const revenueAcc = state.accounts.find(a => a.code === revenueCode);
 
       lines = [
@@ -151,7 +156,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         setErrorMessage('Fuel liters and rate must be greater than zero.');
         return;
       }
-      const fuelExpCode = isTruckA ? '5101' : '5102';
+      const fuelExpCode = `51${suffix}`;
       const fuelExpAcc = state.accounts.find(a => a.code === fuelExpCode);
       const pump = state.pumps.find(p => p.id === pumpId);
 
@@ -203,7 +208,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
           setErrorMessage('Toll amount must be greater than zero.');
           return;
         }
-        const tollExpCode = isTruckA ? '5201' : '5202';
+        const tollExpCode = `52${suffix}`;
         const tollExpAcc = state.accounts.find(a => a.code === tollExpCode);
 
         lines = [
@@ -259,7 +264,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         setErrorMessage('Bhatta amount must be greater than zero.');
         return;
       }
-      const bhattaExpCode = isTruckA ? '5301' : '5302';
+      const bhattaExpCode = `53${suffix}`;
       const bhattaExpAcc = state.accounts.find(a => a.code === bhattaExpCode);
       const driver = state.drivers.find(d => d.id === driverId);
 
@@ -292,7 +297,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         return;
       }
       const driver = state.drivers.find(d => d.id === driverId);
-      const advAccountCode = driverId === 'DRV-01' ? '1501' : '1502';
+      const advAccountCode = `15${drvSuffix}`;
       const advAccount = state.accounts.find(a => a.code === advAccountCode);
 
       lines = [
@@ -322,9 +327,9 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         return;
       }
       const driver = state.drivers.find(d => d.id === driverId);
-      const salaryPayableCode = driverId === 'DRV-01' ? '2301' : '2302';
-      const advanceCode = driverId === 'DRV-01' ? '1501' : '1502';
-      const salaryExpCode = driverId === 'DRV-01' ? '6101' : '6102';
+      const salaryPayableCode = `23${drvSuffix}`;
+      const advanceCode = `15${drvSuffix}`;
+      const salaryExpCode = `61${drvSuffix}`;
 
       // Record settlement:
       // Dr Driver Base Salary Expense (or Dr Salary Payable)
@@ -363,7 +368,7 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         setErrorMessage('Repair amount must be greater than zero.');
         return;
       }
-      const repExpCode = isTruckA ? '5401' : '5402';
+      const repExpCode = `54${suffix}`;
       const repExpAcc = state.accounts.find(a => a.code === repExpCode);
 
       lines = [
@@ -392,8 +397,8 @@ export const QuickVoucherModal: React.FC<QuickVoucherModalProps> = ({
         setErrorMessage('EMI principal and interest must be greater than zero.');
         return;
       }
-      const loanLiabilityCode = isTruckA ? '2101' : '2102';
-      const loanInterestCode = isTruckA ? '6201' : '6202';
+      const loanLiabilityCode = `21${suffix}`;
+      const loanInterestCode = `62${suffix}`;
 
       lines = [
         {

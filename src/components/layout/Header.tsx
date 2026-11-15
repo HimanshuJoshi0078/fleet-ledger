@@ -37,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   const bankAcc = state.accounts.find(a => a.code === '1200');
   const fastagAcc = state.accounts.find(a => a.code === '1300');
   const recAcc = state.accounts.find(a => a.code === '1400');
-  const pumpCreditAccs = state.accounts.filter(a => a.code === '2201' || a.code === '2202');
+  const pumpCreditAccs = state.accounts.filter(a => a.code.startsWith('22'));
 
   // Compute live movements
   const getNetBalance = (code: string, normalDebit: boolean, initialBal: number) => {
@@ -59,9 +59,9 @@ export const Header: React.FC<HeaderProps> = ({
   const fastagBalance = getNetBalance('1300', true, fastagAcc?.openingBalance || 0);
   const receivablesBalance = getNetBalance('1400', true, recAcc?.openingBalance || 0);
 
-  const pump1Balance = getNetBalance('2201', false, pumpCreditAccs.find(a => a.code === '2201')?.openingBalance || 0);
-  const pump2Balance = getNetBalance('2202', false, pumpCreditAccs.find(a => a.code === '2202')?.openingBalance || 0);
-  const totalPumpCredit = pump1Balance + pump2Balance;
+  const totalPumpCredit = pumpCreditAccs.reduce((sum, acc) => {
+    return sum + getNetBalance(acc.code, false, acc.openingBalance || 0);
+  }, 0);
 
   const isFastagLow = fastagBalance < 5000;
 
@@ -93,7 +93,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-400 hidden sm:block">
-                Double-Entry Transport &amp; Fleet Accounting System: 2-Truck Unit
+                Double-Entry Transport &amp; Fleet Accounting System: Commercial Logistics ERP
               </p>
             </div>
           </div>

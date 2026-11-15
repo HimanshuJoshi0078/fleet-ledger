@@ -107,36 +107,47 @@ export const App: React.FC = () => {
       }
 
       const updatedVehicles = [...prev.vehicles, newTruck];
-      const isTruckA = prev.vehicles.length === 0;
-      const assetCode = isTruckA ? '1601' : '1602';
-      const deprCode = isTruckA ? '1701' : '1702';
-      const loanCode = isTruckA ? '2101' : '2102';
+      const truckIndex = prev.vehicles.length;
+      const suffix = String(truckIndex + 1).padStart(2, '0');
+      const assetCode = `16${suffix}`;
+      const deprCode = `169${truckIndex + 1}`;
+      const loanCode = `21${suffix}`;
 
       const netAssetValue = (newTruck.originalPurchaseCost || 0) - (newTruck.accumulatedDepreciation || 0);
       const loanPrincipal = newTruck.loanCurrentPrincipal || 0;
       const equityAddition = netAssetValue - loanPrincipal;
 
-      const updatedAccounts = prev.accounts.map(acc => {
+      let hasAsset = false;
+      let hasDepr = false;
+      let hasLoan = false;
+
+      let updatedAccounts = prev.accounts.map(acc => {
         if (acc.code === assetCode) {
+          hasAsset = true;
           return {
             ...acc,
             name: `Commercial Vehicle Asset : ${newTruck.plateNumber} (${newTruck.model.split('(')[0].trim()})`,
+            vehiclePlate: newTruck.plateNumber,
             openingBalance: newTruck.originalPurchaseCost || 0,
           };
         }
         if (acc.code === deprCode) {
+          hasDepr = true;
           return {
             ...acc,
             name: `Accumulated Depreciation : ${newTruck.plateNumber}`,
-            openingBalance: newTruck.accumulatedDepreciation || 0,
+            vehiclePlate: newTruck.plateNumber,
+            openingBalance: -(newTruck.accumulatedDepreciation || 0),
           };
         }
         if (acc.code === loanCode) {
+          hasLoan = true;
           return {
             ...acc,
             name: (loanPrincipal > 0 && newTruck.financierName)
               ? `${newTruck.financierName} Loan : ${newTruck.plateNumber}`
               : `Vehicle Loan : ${newTruck.plateNumber}`,
+            vehiclePlate: newTruck.plateNumber,
             openingBalance: loanPrincipal,
           };
         }
@@ -148,6 +159,45 @@ export const App: React.FC = () => {
         }
         return acc;
       });
+
+      if (!hasAsset) {
+        updatedAccounts.push({
+          code: assetCode,
+          name: `Commercial Vehicle Asset : ${newTruck.plateNumber} (${newTruck.model.split('(')[0].trim()})`,
+          category: 'ASSET',
+          subCategory: 'FIXED_ASSET',
+          isVehicleSpecific: true,
+          vehiclePlate: newTruck.plateNumber,
+          description: `Original capitalized acquisition cost of commercial truck ${newTruck.plateNumber}`,
+          openingBalance: newTruck.originalPurchaseCost || 0,
+        });
+      }
+      if (!hasDepr) {
+        updatedAccounts.push({
+          code: deprCode,
+          name: `Accumulated Depreciation : ${newTruck.plateNumber}`,
+          category: 'ASSET',
+          subCategory: 'FIXED_ASSET',
+          isVehicleSpecific: true,
+          vehiclePlate: newTruck.plateNumber,
+          description: `Contra-asset: cumulative depreciation charged on truck ${newTruck.plateNumber}`,
+          openingBalance: -(newTruck.accumulatedDepreciation || 0),
+        });
+      }
+      if (!hasLoan) {
+        updatedAccounts.push({
+          code: loanCode,
+          name: (loanPrincipal > 0 && newTruck.financierName)
+            ? `${newTruck.financierName} Loan : ${newTruck.plateNumber}`
+            : `Vehicle Loan : ${newTruck.plateNumber}`,
+          category: 'LIABILITY',
+          subCategory: 'LONG_TERM_LIABILITY',
+          isVehicleSpecific: true,
+          vehiclePlate: newTruck.plateNumber,
+          description: `Vehicle loan outstanding for truck ${newTruck.plateNumber}`,
+          openingBalance: loanPrincipal,
+        });
+      }
 
       const nextState: AppState = {
         ...prev,
@@ -175,12 +225,17 @@ export const App: React.FC = () => {
         });
       }
 
-      const isDriver1 = prev.drivers.length === 0;
-      const advanceCode = isDriver1 ? '1501' : '1502';
-      const salaryCode = isDriver1 ? '2301' : '2302';
+      const driverIndex = prev.drivers.length;
+      const driverSuffix = String(driverIndex + 1).padStart(2, '0');
+      const advanceCode = `15${driverSuffix}`;
+      const salaryCode = `23${driverSuffix}`;
 
-      const updatedAccounts = prev.accounts.map(acc => {
+      let hasAdvance = false;
+      let hasSalary = false;
+
+      let updatedAccounts = prev.accounts.map(acc => {
         if (acc.code === advanceCode) {
+          hasAdvance = true;
           return {
             ...acc,
             name: `Driver Advance Receivable : ${newDriver.fullName}`,
@@ -188,6 +243,7 @@ export const App: React.FC = () => {
           };
         }
         if (acc.code === salaryCode) {
+          hasSalary = true;
           return {
             ...acc,
             name: `Driver Salary Payable : ${newDriver.fullName}`,
@@ -201,6 +257,29 @@ export const App: React.FC = () => {
         }
         return acc;
       });
+
+      if (!hasAdvance) {
+        updatedAccounts.push({
+          code: advanceCode,
+          name: `Driver Advance Receivable : ${newDriver.fullName}`,
+          category: 'ASSET',
+          subCategory: 'CURRENT_ASSET',
+          isVehicleSpecific: true,
+          description: `Cash advance given to driver ${newDriver.fullName}`,
+          openingBalance: newDriver.currentAdvanceBalance || 0,
+        });
+      }
+      if (!hasSalary) {
+        updatedAccounts.push({
+          code: salaryCode,
+          name: `Driver Salary Payable : ${newDriver.fullName}`,
+          category: 'LIABILITY',
+          subCategory: 'CURRENT_LIABILITY',
+          isVehicleSpecific: true,
+          description: `Accrued salary payable to driver ${newDriver.fullName}`,
+          openingBalance: 0,
+        });
+      }
 
       const nextState: AppState = {
         ...prev,
@@ -293,6 +372,7 @@ export const App: React.FC = () => {
           onSelectTab={setActiveTab}
           truckAPlate={truckAPlate}
           truckBPlate={truckBPlate}
+          vehicles={state.vehicles}
           isOpenMobile={isMobileNavOpen}
           onCloseMobile={() => setIsMobileNavOpen(false)}
         />

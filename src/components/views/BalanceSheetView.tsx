@@ -54,8 +54,11 @@ export const BalanceSheetView: React.FC<BalanceSheetViewProps> = ({
         ['CAPITAL & LIABILITIES', 'Retained Earnings (Reserves)', balanceSheet.equity.retainedEarningsOpening],
         ['CAPITAL & LIABILITIES', 'Current Period Net Operating Profit', balanceSheet.equity.currentPeriodNetProfit],
         ['CAPITAL & LIABILITIES', 'TOTAL OWNER EQUITY', balanceSheet.equity.totalEquity],
-        ['LONG TERM LIABILITIES', 'Vehicle Loan: HDFC Bank (RJ-14-GB-1001)', balanceSheet.liabilities.longTermLiabilities.details[0]?.balance || 0],
-        ['LONG TERM LIABILITIES', 'Vehicle Loan: ICICI Bank (RJ-14-GB-1002)', balanceSheet.liabilities.longTermLiabilities.details[1]?.balance || 0],
+        ...balanceSheet.liabilities.longTermLiabilities.details.map(d => [
+          'LONG TERM LIABILITIES',
+          `Vehicle Loan: ${d.bank} (${d.plate})`,
+          d.balance,
+        ]),
         ['LONG TERM LIABILITIES', 'TOTAL VEHICLE LOAN PRINCIPALS', balanceSheet.liabilities.longTermLiabilities.vehicleLoansPayable],
         ['CURRENT LIABILITIES', 'Fuel Pump Credits (IOCL & BPCL)', balanceSheet.liabilities.currentLiabilities.fuelPumpCreditsPayable],
         ['CURRENT LIABILITIES', 'Unpaid Driver Accrued Salaries', balanceSheet.liabilities.currentLiabilities.unpaidDriverSalaries],

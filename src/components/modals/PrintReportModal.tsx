@@ -23,17 +23,14 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  if (!isOpen) return null;
-
   const [reportType, setReportType] = useState<'MONTHLY_SUMMARY' | 'PL_STATEMENT' | 'BALANCE_SHEET'>('MONTHLY_SUMMARY');
+
+  if (!isOpen) return null;
 
   const { breakdowns, consolidated } = generateIncomeStatement(state.journalEntries, state.vehicles);
   const balanceSheet = generateBalanceSheet(state.accounts, state.journalEntries, state.vehicles);
 
-  const truckA = state.vehicles[0];
-  const truckB = state.vehicles[1];
-  const bA = truckA ? breakdowns[truckA.plateNumber] : null;
-  const bB = truckB ? breakdowns[truckB.plateNumber] : null;
+  const colCount = state.vehicles.length + 2;
 
   const handlePrint = () => {
     window.print();
@@ -111,10 +108,10 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                   FLEETLEDGER LOGISTICS &amp; TRANSPORT
                 </h1>
                 <p className="text-[11px] text-slate-600 mt-0.5">
-                  Commercial Fleet Operations: 2-Truck Enterprise | Regd. Rajasthan Transport Authority
+                  Commercial Fleet Operations: {state.vehicles.length} Trucks Enterprise | Regd. Rajasthan Transport Authority
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                  Vehicles: {truckA?.plateNumber} &amp; {truckB?.plateNumber}
+                  Vehicles: {state.vehicles.map(v => v.plateNumber).join(', ') || 'No vehicles registered'}
                 </p>
               </div>
 
@@ -163,58 +160,69 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 <thead>
                   <tr className="bg-slate-100 font-bold border-b border-slate-300 font-sans">
                     <th className="p-2">Financial Metric</th>
-                    <th className="p-2 text-right">{truckA?.plateNumber}</th>
-                    <th className="p-2 text-right">{truckB?.plateNumber}</th>
+                    {state.vehicles.map(v => (
+                      <th key={v.plateNumber} className="p-2 text-right">{v.plateNumber}</th>
+                    ))}
                     <th className="p-2 text-right">Consolidated Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   <tr>
                     <td className="p-1.5 font-sans">Freight Billed (Bilties)</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.grossFreightRevenue)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.grossFreightRevenue)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.grossFreightRevenue)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.grossFreightRevenue)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 font-sans">Diesel Fuel Consumed</td>
-                    <td className="p-1.5 text-right text-rose-700">{formatINR(bA?.dieselExpense)}</td>
-                    <td className="p-1.5 text-right text-rose-700">{formatINR(bB?.dieselExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right text-rose-700">{formatINR(breakdowns[v.plateNumber]?.dieselExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold text-rose-800">{formatINR(consolidated.dieselExpense)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 font-sans">Diesel Liters Consumed</td>
-                    <td className="p-1.5 text-right">{bA?.dieselLiters} L</td>
-                    <td className="p-1.5 text-right">{bB?.dieselLiters} L</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{breakdowns[v.plateNumber]?.dieselLiters || 0} L</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{consolidated.dieselLiters} L</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 font-sans">Highway Tolls &amp; Fastag</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.tollExpense)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.tollExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.tollExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.tollExpense)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 font-sans">Driver Bhatta &amp; Repairs</td>
-                    <td className="p-1.5 text-right">{formatINR((bA?.driverBhattaExpense || 0) + (bA?.enrouteRepairsExpense || 0))}</td>
-                    <td className="p-1.5 text-right">{formatINR((bB?.driverBhattaExpense || 0) + (bB?.enrouteRepairsExpense || 0))}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">
+                        {formatINR((breakdowns[v.plateNumber]?.driverBhattaExpense || 0) + (breakdowns[v.plateNumber]?.enrouteRepairsExpense || 0))}
+                      </td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.driverBhattaExpense + consolidated.enrouteRepairsExpense)}</td>
                   </tr>
                   <tr className="bg-slate-50 font-bold">
                     <td className="p-1.5 font-sans">Gross Operating Profit (Contribution)</td>
-                    <td className="p-1.5 text-right text-emerald-800">{formatINR(bA?.grossOperatingProfit)}</td>
-                    <td className="p-1.5 text-right text-emerald-800">{formatINR(bB?.grossOperatingProfit)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right text-emerald-800">{formatINR(breakdowns[v.plateNumber]?.grossOperatingProfit)}</td>
+                    ))}
                     <td className="p-1.5 text-right text-emerald-950 font-bold">{formatINR(consolidated.grossOperatingProfit)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 font-sans">Driver Salaries &amp; Overheads</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.totalFixedOverheads)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.totalFixedOverheads)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.totalFixedOverheads)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.totalFixedOverheads)}</td>
                   </tr>
                   <tr className="bg-emerald-50/80 font-bold border-t-2 border-slate-400">
                     <td className="p-2 font-sans text-xs">NET OPERATING PROFIT</td>
-                    <td className="p-2 text-right text-emerald-800">{formatINR(bA?.netOperatingProfit)}</td>
-                    <td className="p-2 text-right text-emerald-800">{formatINR(bB?.netOperatingProfit)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-2 text-right text-emerald-800">{formatINR(breakdowns[v.plateNumber]?.netOperatingProfit)}</td>
+                    ))}
                     <td className="p-2 text-right text-emerald-950 text-xs font-bold">{formatINR(consolidated.netOperatingProfit)}</td>
                   </tr>
                 </tbody>
@@ -280,88 +288,100 @@ export const PrintReportModal: React.FC<PrintReportModalProps> = ({
                 <thead>
                   <tr className="bg-slate-100 font-bold border-b border-slate-300 font-sans text-xs">
                     <th className="p-2">Particulars / Account Head</th>
-                    <th className="p-2 text-right">{truckA?.plateNumber}</th>
-                    <th className="p-2 text-right">{truckB?.plateNumber}</th>
+                    {state.vehicles.map(v => (
+                      <th key={v.plateNumber} className="p-2 text-right">{v.plateNumber}</th>
+                    ))}
                     <th className="p-2 text-right">Consolidated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   <tr className="font-bold font-sans text-slate-600 bg-slate-50">
-                    <td colSpan={4} className="p-1.5 uppercase text-[10px]">Revenue</td>
+                    <td colSpan={colCount} className="p-1.5 uppercase text-[10px]">Revenue</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">Freight Billed (Bilties/LRs)</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.grossFreightRevenue)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.grossFreightRevenue)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.grossFreightRevenue)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.grossFreightRevenue)}</td>
                   </tr>
                   <tr className="font-bold bg-blue-50/50">
                     <td className="p-1.5 font-sans">TOTAL REVENUE (A)</td>
-                    <td className="p-1.5 text-right text-blue-900">{formatINR(bA?.totalRevenue)}</td>
-                    <td className="p-1.5 text-right text-blue-900">{formatINR(bB?.totalRevenue)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right text-blue-900">{formatINR(breakdowns[v.plateNumber]?.totalRevenue)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold text-blue-950">{formatINR(consolidated.totalRevenue)}</td>
                   </tr>
 
                   <tr className="font-bold font-sans text-slate-600 bg-slate-50">
-                    <td colSpan={4} className="p-1.5 uppercase text-[10px]">Direct Trip Costs</td>
+                    <td colSpan={colCount} className="p-1.5 uppercase text-[10px]">Direct Trip Costs</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">Diesel Fuel</td>
-                    <td className="p-1.5 text-right text-rose-700">{formatINR(bA?.dieselExpense)}</td>
-                    <td className="p-1.5 text-right text-rose-700">{formatINR(bB?.dieselExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right text-rose-700">{formatINR(breakdowns[v.plateNumber]?.dieselExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold text-rose-800">{formatINR(consolidated.dieselExpense)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">Highway Fastag &amp; Toll</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.tollExpense)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.tollExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.tollExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.tollExpense)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">Driver Trip Bhatta</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.driverBhattaExpense)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.driverBhattaExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.driverBhattaExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.driverBhattaExpense)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">En-route Repairs &amp; Tyres</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.enrouteRepairsExpense)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.enrouteRepairsExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.enrouteRepairsExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.enrouteRepairsExpense)}</td>
                   </tr>
                   <tr className="font-bold bg-rose-50/50">
                     <td className="p-1.5 font-sans">TOTAL DIRECT COSTS (B)</td>
-                    <td className="p-1.5 text-right text-rose-800">{formatINR(bA?.totalDirectExpenses)}</td>
-                    <td className="p-1.5 text-right text-rose-800">{formatINR(bB?.totalDirectExpenses)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right text-rose-800">{formatINR(breakdowns[v.plateNumber]?.totalDirectExpenses)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold text-rose-950">{formatINR(consolidated.totalDirectExpenses)}</td>
                   </tr>
 
                   <tr className="font-bold bg-slate-100">
                     <td className="p-2 font-sans">GROSS PROFIT (A - B)</td>
-                    <td className="p-2 text-right text-emerald-800">{formatINR(bA?.grossOperatingProfit)}</td>
-                    <td className="p-2 text-right text-emerald-800">{formatINR(bB?.grossOperatingProfit)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-2 text-right text-emerald-800">{formatINR(breakdowns[v.plateNumber]?.grossOperatingProfit)}</td>
+                    ))}
                     <td className="p-2 text-right font-bold text-emerald-950">{formatINR(consolidated.grossOperatingProfit)}</td>
                   </tr>
 
                   <tr className="font-bold font-sans text-slate-600 bg-slate-50">
-                    <td colSpan={4} className="p-1.5 uppercase text-[10px]">Fixed Overheads</td>
+                    <td colSpan={colCount} className="p-1.5 uppercase text-[10px]">Fixed Overheads</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">Driver Base Salary</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.driverBaseSalary)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.driverBaseSalary)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.driverBaseSalary)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.driverBaseSalary)}</td>
                   </tr>
                   <tr>
                     <td className="p-1.5 pl-4 font-sans">Vehicle Loan Interest</td>
-                    <td className="p-1.5 text-right">{formatINR(bA?.loanInterestExpense)}</td>
-                    <td className="p-1.5 text-right">{formatINR(bB?.loanInterestExpense)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-1.5 text-right">{formatINR(breakdowns[v.plateNumber]?.loanInterestExpense)}</td>
+                    ))}
                     <td className="p-1.5 text-right font-bold">{formatINR(consolidated.loanInterestExpense)}</td>
                   </tr>
                   <tr className="font-bold bg-emerald-100 border-t-2 border-slate-900 text-xs">
                     <td className="p-2 font-sans">NET OPERATING PROFIT</td>
-                    <td className="p-2 text-right text-emerald-800">{formatINR(bA?.netOperatingProfit)}</td>
-                    <td className="p-2 text-right text-emerald-800">{formatINR(bB?.netOperatingProfit)}</td>
+                    {state.vehicles.map(v => (
+                      <td key={v.plateNumber} className="p-2 text-right text-emerald-800">{formatINR(breakdowns[v.plateNumber]?.netOperatingProfit)}</td>
+                    ))}
                     <td className="p-2 text-right font-bold text-emerald-950">{formatINR(consolidated.netOperatingProfit)}</td>
                   </tr>
                 </tbody>

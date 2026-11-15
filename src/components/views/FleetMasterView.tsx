@@ -74,13 +74,13 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          {onOpenAddTruck && state.vehicles.length < 2 && (
+          {onOpenAddTruck && (
             <button
               onClick={onOpenAddTruck}
               className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold rounded border border-blue-500 transition-colors shadow-sm min-h-[42px] w-full sm:w-auto whitespace-nowrap"
             >
               <Plus className="w-4 h-4 flex-shrink-0" />
-              <span>Add Truck ({state.vehicles.length}/2)</span>
+              <span>Add Commercial Truck</span>
             </button>
           )}
 
@@ -326,25 +326,23 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
           </div>
         )}
 
-        {/* Exactly 1 truck registered: show slot card for second truck */}
-        {state.vehicles.length === 1 && (
-          <div className="bg-white rounded-lg border-2 border-dashed border-slate-300 shadow-sm p-6 flex flex-col items-center justify-center text-center space-y-3">
+        {/* Additional vehicle slot card */}
+        {state.vehicles.length > 0 && onOpenAddTruck && (
+          <div className="bg-white rounded-lg border-2 border-dashed border-slate-300 shadow-sm p-6 flex flex-col items-center justify-center text-center space-y-3 min-h-[260px]">
             <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <div className="font-bold text-slate-900 text-sm">Truck B Slot Available</div>
-              <p className="text-xs text-slate-500 mt-0.5">Register your second commercial vehicle to complete the 2-truck fleet.</p>
+              <div className="font-bold text-slate-900 text-sm">Add Commercial Truck</div>
+              <p className="text-xs text-slate-500 mt-0.5">Register an additional vehicle profile with asset cost, loan details, and compliance records.</p>
             </div>
-            {onOpenAddTruck && (
-              <button
-                onClick={onOpenAddTruck}
-                className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
-              >
-                <Plus className="w-3.5 h-3.5 flex-shrink-0" />
-                <span>Add Second Truck</span>
-              </button>
-            )}
+            <button
+              onClick={onOpenAddTruck}
+              className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
+            >
+              <Plus className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>Add Vehicle</span>
+            </button>
           </div>
         )}
       </div>

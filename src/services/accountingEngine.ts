@@ -32,17 +32,55 @@ export function generateTrialBalance(
   const debitSums: Record<string, number> = {};
   const creditSums: Record<string, number> = {};
 
+  // Ensure any account code referenced in journal entries is included in trial balance
+  const knownCodes = new Set(accounts.map(a => a.code));
+  const allAccounts = [...accounts];
+
   for (const entry of filteredEntries) {
     for (const line of entry.lines) {
       debitSums[line.accountCode] = (debitSums[line.accountCode] || 0) + (line.debit || 0);
       creditSums[line.accountCode] = (creditSums[line.accountCode] || 0) + (line.credit || 0);
+
+      if (!knownCodes.has(line.accountCode)) {
+        knownCodes.add(line.accountCode);
+        const code = line.accountCode;
+        let category: Account['category'] = 'EXPENSE';
+        let subCategory: Account['subCategory'] = 'DIRECT_EXPENSE';
+        if (code.startsWith('1')) {
+          category = 'ASSET';
+          subCategory = code.startsWith('16') ? 'FIXED_ASSET' : 'CURRENT_ASSET';
+        } else if (code.startsWith('2')) {
+          category = 'LIABILITY';
+          subCategory = code.startsWith('21') ? 'LONG_TERM_LIABILITY' : 'CURRENT_LIABILITY';
+        } else if (code.startsWith('3')) {
+          category = 'EQUITY';
+          subCategory = 'CAPITAL';
+        } else if (code.startsWith('4')) {
+          category = 'REVENUE';
+          subCategory = 'DIRECT_INCOME';
+        } else if (code.startsWith('5')) {
+          category = 'EXPENSE';
+          subCategory = 'DIRECT_EXPENSE';
+        } else if (code.startsWith('6')) {
+          category = 'EXPENSE';
+          subCategory = 'FIXED_OVERHEAD';
+        }
+
+        allAccounts.push({
+          code,
+          name: line.accountName || `Account ${code}`,
+          category,
+          subCategory,
+          openingBalance: 0,
+        });
+      }
     }
   }
 
   let grandDebit = 0;
   let grandCredit = 0;
 
-  const items: TrialBalanceItem[] = accounts.map(acc => {
+  const items: TrialBalanceItem[] = allAccounts.map(acc => {
     const dSum = debitSums[acc.code] || 0;
     const cSum = creditSums[acc.code] || 0;
 
@@ -148,30 +186,32 @@ export function generateIncomeStatement(
   const consolidated = initBreakdown('TOTAL', 'Consolidated Fleet Enterprise');
 
   // Process all journal lines
-  const v1Plate = vehicles[0]?.plateNumber;
-  const v2Plate = vehicles[1]?.plateNumber;
-
   for (const entry of filteredEntries) {
-    const plate = entry.vehiclePlate;
-    const targetBreakdown = breakdowns[plate] ||
-      (entry.lines.some(l => l.accountCode.endsWith('01')) && v1Plate ? breakdowns[v1Plate] : undefined) ||
-      (entry.lines.some(l => l.accountCode.endsWith('02')) && v2Plate ? breakdowns[v2Plate] : undefined);
+    let targetBreakdown = entry.vehiclePlate ? breakdowns[entry.vehiclePlate] : undefined;
+
+    // Helper to resolve the target vehicle breakdown from account code suffix or entry
+    const getVehicleBreakdown = (code: string) => {
+      if (targetBreakdown) return targetBreakdown;
+      const lastTwo = code.slice(-2);
+      const idx = parseInt(lastTwo, 10) - 1;
+      if (!isNaN(idx) && idx >= 0 && idx < vehicles.length && breakdowns[vehicles[idx].plateNumber]) {
+        return breakdowns[vehicles[idx].plateNumber];
+      }
+      return undefined;
+    };
 
     for (const line of entry.lines) {
       const code = line.accountCode;
+      const bd = getVehicleBreakdown(code);
 
       // Revenue: Credit lines in 4000 series
       if (line.credit > 0 && code.startsWith('4')) {
         if (code === '4200') {
-          if (targetBreakdown) targetBreakdown.detentionAndOtherIncome += line.credit;
+          if (bd) bd.detentionAndOtherIncome += line.credit;
           consolidated.detentionAndOtherIncome += line.credit;
         } else {
-          if (targetBreakdown) {
-            targetBreakdown.grossFreightRevenue += line.credit;
-          } else if (code === '4101' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].grossFreightRevenue += line.credit;
-          } else if (code === '4102' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].grossFreightRevenue += line.credit;
+          if (bd) {
+            bd.grossFreightRevenue += line.credit;
           }
           consolidated.grossFreightRevenue += line.credit;
         }
@@ -179,106 +219,68 @@ export function generateIncomeStatement(
 
       // Expenses: Debit lines in 5000 (Direct) & 6000 (Fixed)
       if (line.debit > 0) {
-        // Diesel: 5101, 5102
+        // Diesel: 51xx
         if (code.startsWith('51')) {
-          if (targetBreakdown) {
-            targetBreakdown.dieselExpense += line.debit;
-            if (entry.metadata?.liters) targetBreakdown.dieselLiters += entry.metadata.liters;
-          } else if (code === '5101' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].dieselExpense += line.debit;
-            if (entry.metadata?.liters) breakdowns[v1Plate].dieselLiters += entry.metadata.liters;
-          } else if (code === '5102' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].dieselExpense += line.debit;
-            if (entry.metadata?.liters) breakdowns[v2Plate].dieselLiters += entry.metadata.liters;
+          if (bd) {
+            bd.dieselExpense += line.debit;
+            if (entry.metadata?.liters) bd.dieselLiters += entry.metadata.liters;
           }
           consolidated.dieselExpense += line.debit;
           if (entry.metadata?.liters) consolidated.dieselLiters += entry.metadata.liters;
         }
-        // Tolls: 5201, 5202
+        // Tolls: 52xx
         else if (code.startsWith('52')) {
-          if (targetBreakdown) {
-            targetBreakdown.tollExpense += line.debit;
-          } else if (code === '5201' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].tollExpense += line.debit;
-          } else if (code === '5202' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].tollExpense += line.debit;
+          if (bd) {
+            bd.tollExpense += line.debit;
           }
           consolidated.tollExpense += line.debit;
         }
-        // Driver Bhatta: 5301, 5302
+        // Driver Bhatta: 53xx
         else if (code.startsWith('53')) {
-          if (targetBreakdown) {
-            targetBreakdown.driverBhattaExpense += line.debit;
-          } else if (code === '5301' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].driverBhattaExpense += line.debit;
-          } else if (code === '5302' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].driverBhattaExpense += line.debit;
+          if (bd) {
+            bd.driverBhattaExpense += line.debit;
           }
           consolidated.driverBhattaExpense += line.debit;
         }
-        // Repairs: 5401, 5402
+        // Repairs: 54xx
         else if (code.startsWith('54')) {
-          if (targetBreakdown) {
-            targetBreakdown.enrouteRepairsExpense += line.debit;
-          } else if (code === '5401' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].enrouteRepairsExpense += line.debit;
-          } else if (code === '5402' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].enrouteRepairsExpense += line.debit;
+          if (bd) {
+            bd.enrouteRepairsExpense += line.debit;
           }
           consolidated.enrouteRepairsExpense += line.debit;
         }
-        // Hamali: 5501, 5502
+        // Hamali: 55xx
         else if (code.startsWith('55')) {
-          if (targetBreakdown) {
-            targetBreakdown.loadingHamaliExpense += line.debit;
-          } else if (code === '5501' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].loadingHamaliExpense += line.debit;
-          } else if (code === '5502' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].loadingHamaliExpense += line.debit;
+          if (bd) {
+            bd.loadingHamaliExpense += line.debit;
           }
           consolidated.loadingHamaliExpense += line.debit;
         }
-        // Border tax: 5601, 5602
+        // Border tax: 56xx
         else if (code.startsWith('56')) {
-          if (targetBreakdown) {
-            targetBreakdown.borderGreenTaxExpense += line.debit;
-          } else if (code === '5601' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].borderGreenTaxExpense += line.debit;
-          } else if (code === '5602' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].borderGreenTaxExpense += line.debit;
+          if (bd) {
+            bd.borderGreenTaxExpense += line.debit;
           }
           consolidated.borderGreenTaxExpense += line.debit;
         }
-        // Fixed: Driver Salary 6101, 6102
+        // Fixed: Driver Salary 61xx
         else if (code.startsWith('61')) {
-          if (targetBreakdown) {
-            targetBreakdown.driverBaseSalary += line.debit;
-          } else if (code === '6101' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].driverBaseSalary += line.debit;
-          } else if (code === '6102' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].driverBaseSalary += line.debit;
+          if (bd) {
+            bd.driverBaseSalary += line.debit;
           }
           consolidated.driverBaseSalary += line.debit;
         }
-        // Loan Interest: 6201, 6202
+        // Loan Interest: 62xx
         else if (code.startsWith('62')) {
-          if (targetBreakdown) {
-            targetBreakdown.loanInterestExpense += line.debit;
-          } else if (code === '6201' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].loanInterestExpense += line.debit;
-          } else if (code === '6202' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].loanInterestExpense += line.debit;
+          if (bd) {
+            bd.loanInterestExpense += line.debit;
           }
           consolidated.loanInterestExpense += line.debit;
         }
-        // Insurance/Permits: 6301, 6302
+        // Insurance/Permits: 63xx
         else if (code.startsWith('63')) {
-          if (targetBreakdown) {
-            targetBreakdown.insuranceAmortization += line.debit;
-          } else if (code === '6301' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].insuranceAmortization += line.debit;
-          } else if (code === '6302' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].insuranceAmortization += line.debit;
+          if (bd) {
+            bd.insuranceAmortization += line.debit;
           }
           consolidated.insuranceAmortization += line.debit;
         }
@@ -292,14 +294,10 @@ export function generateIncomeStatement(
             }
           }
         }
-        // Depreciation: 6501, 6502
+        // Depreciation: 65xx
         else if (code.startsWith('65')) {
-          if (targetBreakdown) {
-            targetBreakdown.depreciationExpense += line.debit;
-          } else if (code === '6501' && v1Plate && breakdowns[v1Plate]) {
-            breakdowns[v1Plate].depreciationExpense += line.debit;
-          } else if (code === '6502' && v2Plate && breakdowns[v2Plate]) {
-            breakdowns[v2Plate].depreciationExpense += line.debit;
+          if (bd) {
+            bd.depreciationExpense += line.debit;
           }
           consolidated.depreciationExpense += line.debit;
         }
@@ -361,35 +359,31 @@ export function generateBalanceSheet(
     return item.netBalance;
   };
 
-  // Fixed Assets: Vehicles
-  const v1Gross = getBal('1601');
-  const v1Dep = getBal('1691'); // Stored as negative or deduction
-  const v2Gross = getBal('1602');
-  const v2Dep = getBal('1692');
-
-  const v1Net = v1Gross - Math.abs(v1Dep);
-  const v2Net = v2Gross - Math.abs(v2Dep);
-  const vehiclesGrossValue = v1Gross + v2Gross;
-  const accumulatedDepreciation = Math.abs(v1Dep) + Math.abs(v2Dep);
-  const vehiclesNetBookValue = v1Net + v2Net;
-
+  // Fixed Assets: Dynamic across all registered vehicles
   const vehicleDetails = vehicles.map((v, idx) => {
-    const gross = idx === 0 ? v1Gross : v2Gross;
-    const dep = Math.abs(idx === 0 ? v1Dep : v2Dep);
+    const suffix = String(idx + 1).padStart(2, '0');
+    const assetAcc = accounts.find(a => a.code === `16${suffix}` || (a.category === 'ASSET' && a.subCategory === 'FIXED_ASSET' && a.vehiclePlate === v.plateNumber && !a.name.toLowerCase().includes('depreciation')));
+    const deprAcc = accounts.find(a => a.code === `169${idx + 1}` || (a.category === 'ASSET' && a.subCategory === 'FIXED_ASSET' && a.vehiclePlate === v.plateNumber && a.name.toLowerCase().includes('depreciation')));
+    const gross = assetAcc ? getBal(assetAcc.code) : (v.originalPurchaseCost || 0);
+    const dep = deprAcc ? Math.abs(getBal(deprAcc.code)) : (v.accumulatedDepreciation || 0);
     return {
       plate: v.plateNumber,
-      gross: gross || v.originalPurchaseCost || 0,
-      dep: dep || v.accumulatedDepreciation || 0,
-      net: (gross || v.originalPurchaseCost || 0) - (dep || v.accumulatedDepreciation || 0),
+      gross: gross || 0,
+      dep: dep || 0,
+      net: (gross || 0) - (dep || 0),
     };
   });
+
+  const vehiclesGrossValue = vehicleDetails.reduce((s, d) => s + d.gross, 0);
+  const accumulatedDepreciation = vehicleDetails.reduce((s, d) => s + d.dep, 0);
+  const vehiclesNetBookValue = vehiclesGrossValue - accumulatedDepreciation;
 
   // Current Assets
   const cashInHand = getBal('1100');
   const bankBalance = getBal('1200');
   const fastagWallet = getBal('1300');
   const clientReceivables = getBal('1400');
-  const driverAdvancesRecoverable = getBal('1501') + getBal('1502');
+  const driverAdvancesRecoverable = items.filter(i => i.code.startsWith('15')).reduce((sum, i) => sum + i.netBalance, 0);
 
   const totalCurrentAssets =
     cashInHand +
@@ -401,18 +395,20 @@ export function generateBalanceSheet(
   const totalAssets = vehiclesNetBookValue + totalCurrentAssets;
 
   // Liabilities
-  const loan1 = getBal('2101');
-  const loan2 = getBal('2102');
-  const vehicleLoansPayable = loan1 + loan2;
+  const loanDetails = vehicles.map((v, idx) => {
+    const suffix = String(idx + 1).padStart(2, '0');
+    const loanAcc = accounts.find(a => a.code === `21${suffix}` || (a.category === 'LIABILITY' && a.vehiclePlate === v.plateNumber));
+    const balance = loanAcc ? getBal(loanAcc.code) : (v.loanCurrentPrincipal || 0);
+    return {
+      plate: v.plateNumber,
+      bank: v.financierName || 'Financier Bank',
+      balance: balance || 0,
+    };
+  });
+  const vehicleLoansPayable = loanDetails.reduce((s, l) => s + l.balance, 0);
 
-  const loanDetails = vehicles.map((v, idx) => ({
-    plate: v.plateNumber,
-    bank: v.financierName || 'Financier Bank',
-    balance: idx === 0 ? loan1 : loan2,
-  }));
-
-  const fuelPumpCreditsPayable = getBal('2201') + getBal('2202');
-  const unpaidDriverSalaries = getBal('2301') + getBal('2302');
+  const fuelPumpCreditsPayable = items.filter(i => i.code.startsWith('22')).reduce((sum, i) => sum + i.netBalance, 0);
+  const unpaidDriverSalaries = items.filter(i => i.code.startsWith('23')).reduce((sum, i) => sum + i.netBalance, 0);
   const workshopVendorPayables = getBal('2400');
 
   const totalCurrentLiabilities =
@@ -504,19 +500,19 @@ export function calculateDriverLedger(
   for (const entry of entries) {
     if (entry.driverId === driver.id) {
       if (entry.voucherType === 'DRIVER_ADVANCE') {
-        const line = entry.lines.find(l => l.accountCode === '1501' || l.accountCode === '1502');
+        const line = entry.lines.find(l => l.accountCode.startsWith('15'));
         if (line && line.debit > 0) advancesGiven += line.debit;
       } else if (entry.voucherType === 'DRIVER_BHATTA') {
-        const line = entry.lines.find(l => l.accountCode.startsWith('530'));
+        const line = entry.lines.find(l => l.accountCode.startsWith('53'));
         if (line && line.debit > 0) bhattaTotalReceived += line.debit;
       } else if (entry.voucherType === 'SALARY_PAYMENT') {
         if (entry.metadata?.driverAdvanceDeducted) {
           advancesDeducted += entry.metadata.driverAdvanceDeducted;
         }
-        const salaryLine = entry.lines.find(l => l.accountCode === '2301' || l.accountCode === '2302');
+        const salaryLine = entry.lines.find(l => l.accountCode.startsWith('23'));
         if (salaryLine && salaryLine.debit > 0) salariesPaid += salaryLine.debit;
       } else if (entry.voucherType === 'SALARY_ACCRUAL') {
-        const line = entry.lines.find(l => l.accountCode.startsWith('610'));
+        const line = entry.lines.find(l => l.accountCode.startsWith('61'));
         if (line && line.debit > 0) salariesAccrued += line.debit;
       }
     }

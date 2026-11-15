@@ -187,7 +187,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             <div>
               <div className="font-bold text-slate-700">Load Benchmark Sample Data</div>
               <div className="text-[11px] text-slate-500">
-                Optional: Populates standard 2-truck reference dataset for testing.
+                Optional: Populates standard reference dataset for testing.
               </div>
             </div>
             <button

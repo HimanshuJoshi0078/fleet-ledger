@@ -57,7 +57,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <span>Enterprise Fleet Overview</span>
             <span className="text-xs bg-slate-800 text-white font-mono px-2 py-0.5 rounded font-normal">
-              {state.vehicles.length} of 2 Trucks Registered
+              {state.vehicles.length} {state.vehicles.length === 1 ? 'Truck' : 'Trucks'} Active
             </span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -175,100 +175,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* 2-Truck Side-by-Side Comparison Performance Cards */}
+      {/* Fleet Commercial Trucks Performance Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Truck A Profile */}
-        {truckA && breakdownA ? (
-          <div className="bg-white rounded-lg border border-slate-300 shadow-sm overflow-hidden">
-            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-600 rounded text-white">
-                  <Truck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-bold text-sm tracking-tight font-mono">{truckA.plateNumber}</div>
-                  <div className="text-[11px] text-slate-400">{truckA.model}</div>
-                </div>
-              </div>
-              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
-                {truckA.operationalStatus}
-              </span>
-            </div>
-
-            <div className="p-4 space-y-3 text-xs">
-              <div className="grid grid-cols-3 gap-2 text-center pb-3 border-b border-slate-200">
-                <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                  <span className="text-[11px] text-slate-500 block">Revenue</span>
-                  <span className="font-mono font-bold text-slate-900 text-sm">
-                    {formatINR(breakdownA.totalRevenue, false)}
-                  </span>
-                </div>
-                <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                  <span className="text-[11px] text-slate-500 block">Direct Expenses</span>
-                  <span className="font-mono font-bold text-rose-700 text-sm">
-                    {formatINR(breakdownA.totalDirectExpenses, false)}
-                  </span>
-                </div>
-                <div className="bg-emerald-50/70 p-2 rounded border border-emerald-200">
-                  <span className="text-[11px] text-emerald-800 block">Net Profit</span>
-                  <span className="font-mono font-bold text-emerald-700 text-sm">
-                    {formatINR(breakdownA.netOperatingProfit, false)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Cost breakdown progress bars */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Diesel Fuel Cost ({breakdownA.dieselLiters} Ltr):</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(breakdownA.dieselExpense)} (
-                    {formatPercent(breakdownA.totalRevenue > 0 ? (breakdownA.dieselExpense / breakdownA.totalRevenue) * 100 : 0)})
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Tolls &amp; Fastag Deductions:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(breakdownA.tollExpense)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Driver Bhatta &amp; Repairs:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(breakdownA.driverBhattaExpense + breakdownA.enrouteRepairsExpense)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Fixed Monthly Loan EMI:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(truckA.monthlyEMI)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Footer specs */}
-              <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-[11px] text-slate-500 font-mono">
-                <span>Odometer: {formatKm(truckA.currentOdometerKm)}</span>
-                <button
-                  onClick={() => onSelectTab('truck_ledger')}
-                  className="text-blue-700 hover:underline font-sans font-semibold"
-                >
-                  View Full Truck Ledger &rarr;
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg border-2 border-dashed border-slate-300 shadow-sm p-6 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-              <Truck className="w-5 h-5" />
+        {state.vehicles.length === 0 ? (
+          <div className="lg:col-span-2 bg-white rounded-lg border-2 border-dashed border-slate-300 shadow-sm p-8 flex flex-col items-center justify-center text-center space-y-3">
+            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+              <Truck className="w-6 h-6" />
             </div>
             <div>
-              <div className="font-bold text-slate-800 text-sm">Truck A (Primary Vehicle)</div>
-              <p className="text-xs text-slate-500 mt-0.5">Register your first commercial truck to track trip revenues, diesel, and EMIs.</p>
+              <div className="font-bold text-slate-800 text-base">No Commercial Trucks Registered</div>
+              <p className="text-xs text-slate-500 mt-1 max-w-md">Register commercial trucks in your fleet to begin logging freight bilties, fuel entries, tolls, driver settlements, and EMIs.</p>
             </div>
             {onOpenAddTruck && (
               <button
@@ -276,115 +192,133 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
               >
                 <Plus className="w-4 h-4 flex-shrink-0" />
-                <span>Add Truck A</span>
+                <span>Add Commercial Truck</span>
               </button>
             )}
-          </div>
-        )}
-
-        {/* Truck B Profile */}
-        {truckB && breakdownB ? (
-          <div className="bg-white rounded-lg border border-slate-300 shadow-sm overflow-hidden">
-            <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-blue-600 rounded text-white">
-                  <Truck className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-bold text-sm tracking-tight font-mono">{truckB.plateNumber}</div>
-                  <div className="text-[11px] text-slate-400">{truckB.model}</div>
-                </div>
-              </div>
-              <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-700">
-                {truckB.operationalStatus}
-              </span>
-            </div>
-
-            <div className="p-4 space-y-3 text-xs">
-              <div className="grid grid-cols-3 gap-2 text-center pb-3 border-b border-slate-200">
-                <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                  <span className="text-[11px] text-slate-500 block">Revenue</span>
-                  <span className="font-mono font-bold text-slate-900 text-sm">
-                    {formatINR(breakdownB.totalRevenue, false)}
-                  </span>
-                </div>
-                <div className="bg-slate-50 p-2 rounded border border-slate-200">
-                  <span className="text-[11px] text-slate-500 block">Direct Expenses</span>
-                  <span className="font-mono font-bold text-rose-700 text-sm">
-                    {formatINR(breakdownB.totalDirectExpenses, false)}
-                  </span>
-                </div>
-                <div className="bg-emerald-50/70 p-2 rounded border border-emerald-200">
-                  <span className="text-[11px] text-emerald-800 block">Net Profit</span>
-                  <span className="font-mono font-bold text-emerald-700 text-sm">
-                    {formatINR(breakdownB.netOperatingProfit, false)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Cost breakdown progress bars */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Diesel Fuel Cost ({breakdownB.dieselLiters} Ltr):</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(breakdownB.dieselExpense)} (
-                    {formatPercent(breakdownB.totalRevenue > 0 ? (breakdownB.dieselExpense / breakdownB.totalRevenue) * 100 : 0)})
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Tolls &amp; Fastag Deductions:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(breakdownB.tollExpense)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Driver Bhatta &amp; Repairs:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(breakdownB.driverBhattaExpense + breakdownB.enrouteRepairsExpense)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-600">Fixed Monthly Loan EMI:</span>
-                  <span className="font-mono font-semibold text-slate-800">
-                    {formatINR(truckB.monthlyEMI)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Footer specs */}
-              <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-[11px] text-slate-500 font-mono">
-                <span>Odometer: {formatKm(truckB.currentOdometerKm)}</span>
-                <button
-                  onClick={() => onSelectTab('truck_ledger')}
-                  className="text-blue-700 hover:underline font-sans font-semibold"
-                >
-                  View Full Truck Ledger &rarr;
-                </button>
-              </div>
-            </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg border-2 border-dashed border-slate-300 shadow-sm p-6 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-              <Truck className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="font-bold text-slate-800 text-sm">Truck B (Second Vehicle)</div>
-              <p className="text-xs text-slate-500 mt-0.5">Register your second commercial vehicle for comparative 2-truck P&amp;L ledger.</p>
-            </div>
+          <>
+            {state.vehicles.map((truck, idx) => {
+              const breakdown = breakdowns[truck.plateNumber] || {
+                totalRevenue: 0,
+                totalDirectExpenses: 0,
+                netOperatingProfit: 0,
+                dieselExpense: 0,
+                dieselLiters: 0,
+                tollExpense: 0,
+                driverBhattaExpense: 0,
+                enrouteRepairsExpense: 0,
+              };
+              return (
+                <div key={truck.plateNumber} className="bg-white rounded-lg border border-slate-300 shadow-sm overflow-hidden">
+                  <div className="p-3.5 bg-slate-900 text-white flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-600 rounded text-white">
+                        <Truck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm tracking-tight font-mono">
+                          {truck.plateNumber}
+                          <span className="ml-2 text-[10px] font-sans text-slate-400 font-normal">
+                            Truck {String.fromCharCode(65 + idx)}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-400">{truck.model}</div>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
+                      {truck.operationalStatus}
+                    </span>
+                  </div>
+
+                  <div className="p-4 space-y-3 text-xs">
+                    <div className="grid grid-cols-3 gap-2 text-center pb-3 border-b border-slate-200">
+                      <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                        <span className="text-[11px] text-slate-500 block">Revenue</span>
+                        <span className="font-mono font-bold text-slate-900 text-sm">
+                          {formatINR(breakdown.totalRevenue, false)}
+                        </span>
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                        <span className="text-[11px] text-slate-500 block">Direct Expenses</span>
+                        <span className="font-mono font-bold text-rose-700 text-sm">
+                          {formatINR(breakdown.totalDirectExpenses, false)}
+                        </span>
+                      </div>
+                      <div className="bg-emerald-50/70 p-2 rounded border border-emerald-200">
+                        <span className="text-[11px] text-emerald-800 block">Net Profit</span>
+                        <span className="font-mono font-bold text-emerald-700 text-sm">
+                          {formatINR(breakdown.netOperatingProfit, false)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Cost breakdown progress bars */}
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-600">Diesel Fuel Cost ({breakdown.dieselLiters} Ltr):</span>
+                        <span className="font-mono font-semibold text-slate-800">
+                          {formatINR(breakdown.dieselExpense)} (
+                          {formatPercent(breakdown.totalRevenue > 0 ? (breakdown.dieselExpense / breakdown.totalRevenue) * 100 : 0)})
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-600">Tolls &amp; Fastag Deductions:</span>
+                        <span className="font-mono font-semibold text-slate-800">
+                          {formatINR(breakdown.tollExpense)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-600">Driver Bhatta &amp; Repairs:</span>
+                        <span className="font-mono font-semibold text-slate-800">
+                          {formatINR(breakdown.driverBhattaExpense + breakdown.enrouteRepairsExpense)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-slate-600">Fixed Monthly Loan EMI:</span>
+                        <span className="font-mono font-semibold text-slate-800">
+                          {formatINR(truck.monthlyEMI)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Footer specs */}
+                    <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-[11px] text-slate-500 font-mono">
+                      <span>Odometer: {formatKm(truck.currentOdometerKm)}</span>
+                      <button
+                        onClick={() => onSelectTab('truck_ledger')}
+                        className="text-blue-700 hover:underline font-sans font-semibold"
+                      >
+                        View Full Truck Ledger &rarr;
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
             {onOpenAddTruck && (
-              <button
-                onClick={onOpenAddTruck}
-                className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4 flex-shrink-0" />
-                <span>Add Truck B</span>
-              </button>
+              <div className="bg-white rounded-lg border-2 border-dashed border-slate-300 shadow-sm p-6 flex flex-col items-center justify-center text-center space-y-3 min-h-[220px]">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="font-bold text-slate-800 text-sm">Expand Commercial Fleet</div>
+                  <p className="text-xs text-slate-500 mt-0.5">Register an additional commercial truck to track dedicated trip ledgers and balance sheet assets.</p>
+                </div>
+                <button
+                  onClick={onOpenAddTruck}
+                  className="px-4 py-2 min-h-[42px] bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-colors w-full sm:w-auto whitespace-nowrap"
+                >
+                  <Plus className="w-4 h-4 flex-shrink-0" />
+                  <span>Add Commercial Truck</span>
+                </button>
+              </div>
             )}
-          </div>
+          </>
         )}
       </div>
 

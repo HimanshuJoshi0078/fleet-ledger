@@ -25,8 +25,6 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
   onAddTruck,
   existingPlates,
 }) => {
-  if (!isOpen) return null;
-
   const [plateNumber, setPlateNumber] = useState<string>('');
   const [model, setModel] = useState<string>('Tata Signa 4825.T (16 Wheeler Multi-Axle)');
   const [gvwrMT, setGvwrMT] = useState<number>(43.5);
@@ -52,6 +50,8 @@ export const AddTruckModal: React.FC<AddTruckModalProps> = ({
   const [fastagTagId, setFastagTagId] = useState<string>('34161FA8' + Math.floor(10000000 + Math.random() * 90000000));
 
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

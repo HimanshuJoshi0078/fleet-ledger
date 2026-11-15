@@ -32,8 +32,6 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   onSaveEntries,
   defaultTruckPlate,
 }) => {
-  if (!isOpen) return null;
-
   const [selectedTruck, setSelectedTruck] = useState<string>(
     defaultTruckPlate || state.vehicles[0]?.plateNumber || ''
   );
@@ -71,6 +69,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
   // Auto-sync assigned driver when truck changes
   useEffect(() => {
+    if (!isOpen) return;
     const v = state.vehicles.find(veh => veh.plateNumber === selectedTruck);
     if (v && v.assignedDriverId) {
       const d = state.drivers.find(drv => drv.id === v.assignedDriverId);
@@ -79,7 +78,9 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
         setBhattaAmount(d.dailyBhattaRate || 350);
       }
     }
-  }, [selectedTruck, state.vehicles, state.drivers]);
+  }, [isOpen, selectedTruck, state.vehicles, state.drivers]);
+
+  if (!isOpen) return null;
 
   const totalFuelAmount = Math.round(fuelLiters * fuelRate * 100) / 100;
   const totalExpenses =
@@ -110,9 +111,10 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     const createdEntries: JournalEntry[] = [];
     let voucherCounter = state.journalEntries.length;
 
-    // Detect if Truck 1 or Truck 2
+    // Dynamic truck index & suffix
     const truckIndex = state.vehicles.findIndex(v => v.plateNumber === selectedTruck);
-    const suffix = truckIndex === 1 ? '02' : '01'; // '01' for Truck A, '02' for Truck B
+    const safeIndex = truckIndex >= 0 ? truckIndex : 0;
+    const suffix = String(safeIndex + 1).padStart(2, '0');
 
     const matchedDriver = state.drivers.find(d => d.fullName.toLowerCase() === driverName.toLowerCase()) ||
       state.drivers.find(d => d.assignedPlateNumber === selectedTruck);
@@ -121,7 +123,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     if (hasAnyRevenue) {
       voucherCounter++;
       const revVoucher = generateNextVoucherNumber('LR', voucherCounter);
-      const revAccountCode = suffix === '01' ? '4101' : '4102';
+      const revAccountCode = `41${suffix}`;
       const drAccountCode = revenuePaymentMode === 'CASH' ? '1100' : revenuePaymentMode === 'BANK' ? '1200' : '1400';
       const drAccountName = revenuePaymentMode === 'CASH'
         ? 'Cash in Hand (Fleet Operational Cash)'
@@ -165,8 +167,8 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     if (totalFuelAmount > 0) {
       voucherCounter++;
       const fuelVoucher = generateNextVoucherNumber('DS', voucherCounter);
-      const fuelExpCode = suffix === '01' ? '5101' : '5102';
-      const crCode = fuelPaymentMode === 'CASH' ? '1100' : fuelPaymentMode === 'BANK' ? '1200' : (suffix === '01' ? '2201' : '2202');
+      const fuelExpCode = `51${suffix}`;
+      const crCode = fuelPaymentMode === 'CASH' ? '1100' : fuelPaymentMode === 'BANK' ? '1200' : (safeIndex < 2 ? `220${safeIndex + 1}` : `22${suffix}`);
       const crName = fuelPaymentMode === 'CASH'
         ? 'Cash in Hand (Fleet Operational Cash)'
         : fuelPaymentMode === 'BANK'
@@ -209,7 +211,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     if (Number(tollAmount) > 0) {
       voucherCounter++;
       const tollVoucher = generateNextVoucherNumber('FT', voucherCounter);
-      const tollExpCode = suffix === '01' ? '5201' : '5202';
+      const tollExpCode = `52${suffix}`;
       const crCode = tollPaymentMode === 'CASH' ? '1100' : tollPaymentMode === 'BANK' ? '1200' : '1300';
       const crName = tollPaymentMode === 'CASH'
         ? 'Cash in Hand (Fleet Operational Cash)'
@@ -248,7 +250,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     if (Number(bhattaAmount) > 0) {
       voucherCounter++;
       const bhattaVoucher = generateNextVoucherNumber('BH', voucherCounter);
-      const bhattaExpCode = suffix === '01' ? '5301' : '5302';
+      const bhattaExpCode = `53${suffix}`;
       const crCode = bhattaPaymentMode === 'CASH' ? '1100' : '1200';
 
       createdEntries.push({
@@ -283,7 +285,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     if (Number(maintenanceAmount) > 0) {
       voucherCounter++;
       const maintVoucher = generateNextVoucherNumber('EX', voucherCounter);
-      const repExpCode = suffix === '01' ? '5401' : '5402';
+      const repExpCode = `54${suffix}`;
       const crCode = maintenancePaymentMode === 'CASH' ? '1100' : '1200';
 
       createdEntries.push({

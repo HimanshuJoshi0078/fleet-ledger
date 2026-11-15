@@ -26,26 +26,30 @@ export const TruckLedgerView: React.FC<TruckLedgerViewProps> = ({
   onOpenQuickVoucher,
 }) => {
   const [selectedPlate, setSelectedPlate] = useState<string>(
-    state.vehicles[0]?.plateNumber || 'RJ-14-GB-1001'
+    state.vehicles[0]?.plateNumber || 'TOTAL'
   );
+
+  const effectivePlate = (selectedPlate !== 'TOTAL' && !state.vehicles.some(v => v.plateNumber === selectedPlate))
+    ? (state.vehicles[0]?.plateNumber || 'TOTAL')
+    : selectedPlate;
 
   const { breakdowns, consolidated } = generateIncomeStatement(
     state.journalEntries,
     state.vehicles
   );
 
-  const selectedVehicle = state.vehicles.find(v => v.plateNumber === selectedPlate);
+  const selectedVehicle = state.vehicles.find(v => v.plateNumber === effectivePlate);
   const selectedDriver = selectedVehicle
     ? state.drivers.find(d => d.id === selectedVehicle.assignedDriverId)
     : null;
 
-  const currentBreakdown = selectedPlate === 'TOTAL'
+  const currentBreakdown = effectivePlate === 'TOTAL'
     ? consolidated
-    : breakdowns[selectedPlate] || consolidated;
+    : breakdowns[effectivePlate] || consolidated;
 
   // Filter transactions tagged specifically to this truck
   const vehicleEntries = state.journalEntries.filter(
-    e => (selectedPlate === 'TOTAL' ? true : e.vehiclePlate === selectedPlate)
+    e => (effectivePlate === 'TOTAL' ? true : e.vehiclePlate === effectivePlate)
   ).sort((a, b) => a.date.localeCompare(b.date)); // chronological for ledger
 
   // Calculate days to expiry
@@ -96,7 +100,7 @@ export const TruckLedgerView: React.FC<TruckLedgerViewProps> = ({
                 : 'text-slate-700 hover:bg-slate-200'
             }`}
           >
-            Consolidated (Both)
+            Consolidated Fleet
           </button>
         </div>
       </div>

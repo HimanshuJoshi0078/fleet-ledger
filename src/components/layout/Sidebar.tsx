@@ -13,6 +13,7 @@ import {
   Building2,
   X,
 } from 'lucide-react';
+import { VehicleProfile } from '../../types/fleet';
 
 export type ActiveTab =
   | 'dashboard'
@@ -32,6 +33,7 @@ interface SidebarProps {
   onSelectTab: (tab: ActiveTab) => void;
   truckAPlate: string;
   truckBPlate: string;
+  vehicles?: VehicleProfile[];
   isOpenMobile?: boolean;
   onCloseMobile?: () => void;
 }
@@ -41,9 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTab,
   truckAPlate,
   truckBPlate,
+  vehicles,
   isOpenMobile,
   onCloseMobile,
 }) => {
+  const truckLedgerSublabel = vehicles && vehicles.length > 2
+    ? `${vehicles.length} Active Fleet Trucks`
+    : `${truckAPlate} vs ${truckBPlate}`;
+
   const navItems = [
     {
       id: 'dashboard' as ActiveTab,
@@ -61,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'truck_ledger' as ActiveTab,
       label: 'Per-Truck Ledger & P&L',
       icon: Truck,
-      sublabel: `${truckAPlate} vs ${truckBPlate}`,
+      sublabel: truckLedgerSublabel,
     },
     {
       id: 'income_statement' as ActiveTab,
@@ -205,14 +212,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 bg-slate-950/40">
           <div className="font-semibold text-slate-300 mb-1">OPERATIONAL PROFILE</div>
           <div className="space-y-1 font-mono text-[10px]">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Truck A:</span>
-              <span className="text-slate-300">{truckAPlate}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Truck B:</span>
-              <span className="text-slate-300">{truckBPlate}</span>
-            </div>
+            {vehicles && vehicles.length > 0 ? (
+              vehicles.slice(0, 4).map((v, i) => (
+                <div key={v.plateNumber} className="flex justify-between">
+                  <span className="text-slate-500">Truck {String.fromCharCode(65 + i)}:</span>
+                  <span className="text-slate-300">{v.plateNumber}</span>
+                </div>
+              ))
+            ) : (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Truck A:</span>
+                  <span className="text-slate-300">{truckAPlate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Truck B:</span>
+                  <span className="text-slate-300">{truckBPlate}</span>
+                </div>
+              </>
+            )}
+            {vehicles && vehicles.length > 4 && (
+              <div className="text-[9px] text-slate-500 text-right">
+                +{vehicles.length - 4} more trucks
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-slate-500">Basis:</span>
               <span className="text-emerald-400">Double-Entry Accrual</span>

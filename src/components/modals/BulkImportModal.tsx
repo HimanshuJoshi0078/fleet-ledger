@@ -42,13 +42,13 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
   onClose,
   onImportEntries,
 }) => {
-  if (!isOpen) return null;
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [parsedRows, setParsedRows] = useState<ParsedImportRow[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [successMessage, setSuccessMessage] = useState<string>('');
+
+  if (!isOpen) return null;
 
   const registeredPlates = state.vehicles.map(v => v.plateNumber.toUpperCase());
   const samplePlateA = state.vehicles[0]?.plateNumber || 'RJ-14-GB-1001';
@@ -325,7 +325,8 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       const truckIndex = state.vehicles.findIndex(
         v => v.plateNumber.toUpperCase() === row.truckPlate.toUpperCase()
       );
-      const suffix = truckIndex === 1 ? '02' : '01';
+      const safeIndex = truckIndex >= 0 ? truckIndex : 0;
+      const suffix = String(safeIndex + 1).padStart(2, '0');
       const targetPlate = row.truckPlate;
 
       const pMode = row.paymentMode.toUpperCase();
@@ -339,7 +340,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
           ? 'Accounts Receivable (Client Freight Dues)'
           : 'Bank Fleet Current A/c';
 
-        const crCode = suffix === '01' ? '4101' : '4102';
+        const crCode = `41${suffix}`;
 
         newEntries.push({
           id: `VR-IMP-${Date.now()}-${counter}`,
@@ -356,8 +357,8 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         });
       } else if (row.category === 'Fuel') {
         const voucherNo = generateNextVoucherNumber('DS', counter);
-        const drCode = suffix === '01' ? '5101' : '5102';
-        const crCode = pMode.includes('CASH') ? '1100' : pMode.includes('CREDIT') ? (suffix === '01' ? '2201' : '2202') : '1200';
+        const drCode = `51${suffix}`;
+        const crCode = pMode.includes('CASH') ? '1100' : pMode.includes('CREDIT') ? (safeIndex < 2 ? `220${safeIndex + 1}` : `22${suffix}`) : '1200';
         const crName = crCode === '1100'
           ? 'Cash in Hand (Fleet Operational Cash)'
           : crCode.startsWith('22')
@@ -379,7 +380,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         });
       } else if (row.category === 'Toll') {
         const voucherNo = generateNextVoucherNumber('FT', counter);
-        const drCode = suffix === '01' ? '5201' : '5202';
+        const drCode = `52${suffix}`;
         const crCode = pMode.includes('CASH') ? '1100' : pMode.includes('BANK') ? '1200' : '1300';
         const crName = crCode === '1300' ? 'Fastag Master Wallet (NHAI Fleet Pool)' : crCode === '1100' ? 'Cash in Hand' : 'Bank Fleet Current A/c';
 
@@ -398,7 +399,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         });
       } else if (row.category === 'Salary') {
         const voucherNo = generateNextVoucherNumber('SP', counter);
-        const drCode = suffix === '01' ? '6101' : '6102';
+        const drCode = `61${suffix}`;
         const crCode = pMode.includes('CASH') ? '1100' : '1200';
 
         newEntries.push({
@@ -416,7 +417,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
         });
       } else if (row.category === 'Bhatta') {
         const voucherNo = generateNextVoucherNumber('BH', counter);
-        const drCode = suffix === '01' ? '5301' : '5302';
+        const drCode = `53${suffix}`;
         const crCode = pMode.includes('BANK') ? '1200' : '1100';
 
         newEntries.push({
@@ -435,7 +436,7 @@ export const BulkImportModal: React.FC<BulkImportModalProps> = ({
       } else {
         // Maintenance / General Expense
         const voucherNo = generateNextVoucherNumber('EX', counter);
-        const drCode = suffix === '01' ? '5401' : '5402';
+        const drCode = `54${suffix}`;
         const crCode = pMode.includes('CREDIT') ? '2400' : pMode.includes('BANK') ? '1200' : '1100';
 
         newEntries.push({
