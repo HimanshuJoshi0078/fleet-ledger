@@ -1,5 +1,5 @@
 import { Account, JournalEntry } from '../types/accounting';
-import { VehicleProfile, DriverProfile, FuelPumpAccount, ClientProfile, FastagWalletState } from '../types/fleet';
+import { VehicleProfile, DriverProfile, FuelPumpAccount, Client, ClientProfile, FastagWalletState } from '../types/fleet';
 import { STANDARD_CHART_OF_ACCOUNTS } from '../constants/chartOfAccounts';
 import {
   INITIAL_VEHICLES,
@@ -27,7 +27,7 @@ export interface AppState {
   vehicles: VehicleProfile[];
   drivers: DriverProfile[];
   pumps: FuelPumpAccount[];
-  clients: ClientProfile[];
+  clients: Client[];
   fastagWallet: FastagWalletState;
   journalEntries: JournalEntry[];
 }
@@ -42,14 +42,67 @@ export function loadInitialState(): AppState {
     const rawFastag = localStorage.getItem(STORAGE_KEYS.FASTAG);
     const rawEntries = localStorage.getItem(STORAGE_KEYS.ENTRIES);
 
+    const entries: JournalEntry[] = rawEntries ? JSON.parse(rawEntries) : INITIAL_JOURNAL_ENTRIES;
+    const rawParsedVehicles: VehicleProfile[] = rawVehicles ? JSON.parse(rawVehicles) : INITIAL_VEHICLES;
+    const vehicles: VehicleProfile[] = rawParsedVehicles.map(v => ({
+      ...v,
+      status: v.status || (v.operationalStatus === 'DECOMMISSIONED' ? 'DECOMMISSIONED' : (v.operationalStatus === 'WORKSHOP' || v.operationalStatus === 'MAINTENANCE') ? 'MAINTENANCE' : 'ACTIVE'),
+    }));
+
+    let clients: Client[] = rawClients ? JSON.parse(rawClients) : INITIAL_CLIENTS;
+    // Normalize client profiles
+    clients = clients.map(c => ({
+      ...c,
+      name: c.name || c.clientName || 'Unnamed Consignor',
+      clientName: c.clientName || c.name || 'Unnamed Consignor',
+      phone: c.phone || '',
+      openingBalance: typeof c.openingBalance === 'number' ? c.openingBalance : (c.currentReceivableBalance || 0),
+      createdAt: c.createdAt || new Date().toISOString(),
+    }));
+
+    // Auto-migrate any unique client names already used in existing freight/journal entries
+    const existingClientNames = new Set(clients.map(c => (c.name || '').toLowerCase().trim()));
+    let hasMigrated = false;
+
+    for (const entry of entries) {
+      let clientCandidate = entry.metadata?.clientName;
+      if (!clientCandidate && entry.narration) {
+        const match = entry.narration.match(/Client\s+([^,(\[]+)/i);
+        if (match) clientCandidate = match[1].trim();
+      }
+      if (clientCandidate && clientCandidate.trim()) {
+        const cleanName = clientCandidate.trim();
+        if (!existingClientNames.has(cleanName.toLowerCase())) {
+          existingClientNames.add(cleanName.toLowerCase());
+          clients.push({
+            id: `CLI-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+            name: cleanName,
+            clientName: cleanName,
+            phone: '',
+            openingBalance: 0,
+            createdAt: entry.date || new Date().toISOString(),
+          });
+          hasMigrated = true;
+        }
+      }
+    }
+
+    if (hasMigrated && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clients));
+      } catch {
+        // ignore
+      }
+    }
+
     return {
       accounts: rawAccounts ? JSON.parse(rawAccounts) : STANDARD_CHART_OF_ACCOUNTS,
-      vehicles: rawVehicles ? JSON.parse(rawVehicles) : INITIAL_VEHICLES,
+      vehicles,
       drivers: rawDrivers ? JSON.parse(rawDrivers) : INITIAL_DRIVERS,
       pumps: rawPumps ? JSON.parse(rawPumps) : INITIAL_FUEL_PUMPS,
-      clients: rawClients ? JSON.parse(rawClients) : INITIAL_CLIENTS,
+      clients,
       fastagWallet: rawFastag ? JSON.parse(rawFastag) : INITIAL_FASTAG_WALLET,
-      journalEntries: rawEntries ? JSON.parse(rawEntries) : INITIAL_JOURNAL_ENTRIES,
+      journalEntries: entries,
     };
   } catch (err) {
     console.error('Failed to parse local storage, loading clean state', err);
@@ -161,21 +214,29 @@ export function loadBenchmarkDemo(): AppState {
     clients: [
       {
         id: 'CLI-01',
+        name: 'UltraTech Cement Ltd (Kotputli Unit)',
         clientName: 'UltraTech Cement Ltd (Kotputli Unit)',
         gstin: '08AAACU1234F1Z8',
         contactPerson: 'Ravi Teja',
         phone: '+91 98291 10022',
+        address: 'Kotputli / Shambhupura',
         city: 'Kotputli / Shambhupura',
+        openingBalance: 142000,
+        createdAt: '2026-11-01',
         standardPaymentTermsDays: 15,
         currentReceivableBalance: 142000,
       },
       {
         id: 'CLI-02',
+        name: 'Wonder Cement Limited (Nimbahera)',
         clientName: 'Wonder Cement Limited (Nimbahera)',
         gstin: '08AABCB9876E1Z2',
         contactPerson: 'Mahesh Joshi',
         phone: '+91 94140 44321',
+        address: 'Nimbahera',
         city: 'Nimbahera',
+        openingBalance: 118500,
+        createdAt: '2026-11-01',
         standardPaymentTermsDays: 15,
         currentReceivableBalance: 118500,
       },

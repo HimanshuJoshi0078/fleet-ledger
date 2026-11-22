@@ -71,6 +71,8 @@ export interface JournalEntry {
     driverAdvanceDeducted?: number;
     loanPrincipalAmount?: number;
     loanInterestAmount?: number;
+    clientName?: string;
+    clientId?: string;
   };
   createdAt: string;
 }

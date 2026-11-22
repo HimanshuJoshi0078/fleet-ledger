@@ -32,8 +32,14 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   onSaveEntries,
   defaultTruckPlate,
 }) => {
+  const activeTrucks = state.vehicles.filter(
+    v => v.operationalStatus !== 'DECOMMISSIONED' && v.status !== 'DECOMMISSIONED'
+  );
+
   const [selectedTruck, setSelectedTruck] = useState<string>(
-    defaultTruckPlate || state.vehicles[0]?.plateNumber || ''
+    defaultTruckPlate && activeTrucks.some(v => v.plateNumber === defaultTruckPlate)
+      ? defaultTruckPlate
+      : activeTrucks[0]?.plateNumber || ''
   );
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [driverName, setDriverName] = useState<string>('');
@@ -43,6 +49,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
   const [hasRevenue, setHasRevenue] = useState<boolean>(true);
   const [freightAmount, setFreightAmount] = useState<number>(0);
   const [clientName, setClientName] = useState<string>('');
+  const [isCustomClient, setIsCustomClient] = useState<boolean>(false);
   const [biltyNumber, setBiltyNumber] = useState<string>('');
   const [revenuePaymentMode, setRevenuePaymentMode] = useState<'BANK' | 'CASH' | 'CREDIT'>('CREDIT');
 
@@ -68,9 +75,20 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  // Auto-sync assigned driver when truck changes
+  // Auto-Initialize & Sync selected truck state
   useEffect(() => {
     if (!isOpen) return;
+    const isCurrentValid = activeTrucks.some(v => v.plateNumber === selectedTruck);
+    if (!selectedTruck || !isCurrentValid) {
+      const defaultValid = defaultTruckPlate && activeTrucks.some(v => v.plateNumber === defaultTruckPlate);
+      const targetPlate = defaultValid ? defaultTruckPlate : (activeTrucks[0]?.plateNumber || '');
+      setSelectedTruck(targetPlate);
+    }
+  }, [isOpen, state.vehicles, defaultTruckPlate]);
+
+  // Auto-sync assigned driver when truck changes
+  useEffect(() => {
+    if (!isOpen || !selectedTruck) return;
     const v = state.vehicles.find(veh => veh.plateNumber === selectedTruck);
     if (v && v.assignedDriverId) {
       const d = state.drivers.find(drv => drv.id === v.assignedDriverId);
@@ -120,6 +138,10 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
     const matchedDriver = state.drivers.find(d => d.fullName.toLowerCase() === driverName.toLowerCase()) ||
       state.drivers.find(d => d.assignedPlateNumber === selectedTruck);
 
+    const matchedClient = state.clients.find(
+      c => (c.name || c.clientName || '').toLowerCase().trim() === clientName.toLowerCase().trim()
+    );
+
     // 1. Revenue Entry
     if (hasAnyRevenue) {
       voucherCounter++;
@@ -138,6 +160,7 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
         date,
         voucherType: 'FREIGHT_BILL',
         vehiclePlate: selectedTruck,
+        clientId: matchedClient?.id,
         driverId: matchedDriver?.id,
         referenceNumber: biltyNumber || undefined,
         narration: `Freight revenue for ${selectedTruck}: ${clientName ? `Client ${clientName}` : 'Trip Load'}${routeNotes ? ` (${routeNotes})` : ''} [${revenuePaymentMode}]`,
@@ -159,6 +182,8 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
         ],
         metadata: {
           biltyNumber: biltyNumber || undefined,
+          clientName: clientName || undefined,
+          clientId: matchedClient?.id,
         },
         createdAt: new Date().toISOString(),
       });
@@ -341,10 +366,16 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4 text-xs">
-          {errorMessage && (
+          {/* Warning & Error Banner */}
+          {(errorMessage || activeTrucks.length === 0 || !selectedTruck) && (
             <div className="bg-rose-50 border border-rose-300 text-rose-800 p-2.5 rounded flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-              <span>{errorMessage}</span>
+              <span>
+                {errorMessage ||
+                  (activeTrucks.length === 0
+                    ? 'No active trucks registered in fleet. Please register an active truck first.'
+                    : 'Please select a truck to record daily trip entries.')}
+              </span>
             </div>
           )}
 
@@ -356,18 +387,24 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
               </label>
               <select
                 value={selectedTruck}
-                onChange={e => setSelectedTruck(e.target.value)}
+                onChange={e => {
+                  setSelectedTruck(e.target.value);
+                  setErrorMessage('');
+                }}
                 required
                 className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs font-bold bg-white"
               >
-                {state.vehicles.length === 0 ? (
-                  <option value="">-- No trucks registered --</option>
+                {activeTrucks.length === 0 ? (
+                  <option value="">-- No active trucks available --</option>
                 ) : (
-                  state.vehicles.map(v => (
-                    <option key={v.plateNumber} value={v.plateNumber}>
-                      {v.plateNumber} ({v.model.split('(')[0]})
-                    </option>
-                  ))
+                  activeTrucks.map(v => {
+                    const isMaint = v.operationalStatus === 'MAINTENANCE' || v.status === 'MAINTENANCE' || v.operationalStatus === 'WORKSHOP';
+                    return (
+                      <option key={v.plateNumber} value={v.plateNumber}>
+                        {v.plateNumber} ({v.model.split('(')[0].trim()}){isMaint ? ' (In Maintenance)' : ''}
+                      </option>
+                    );
+                  })
                 )}
               </select>
             </div>
@@ -453,14 +490,50 @@ export const DailyEntryModal: React.FC<DailyEntryModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">Client / Consignor</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. UltraTech Cement"
-                    value={clientName}
-                    onChange={e => setClientName(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-700 font-medium">Client / Consignor</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomClient(prev => !prev)}
+                      className="text-[10px] text-blue-700 hover:underline font-semibold"
+                    >
+                      {isCustomClient ? 'Select from Saved' : '+ Add New Client'}
+                    </button>
+                  </div>
+                  {isCustomClient ? (
+                    <input
+                      type="text"
+                      placeholder="Type client / consignor name"
+                      value={clientName}
+                      onChange={e => setClientName(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white"
+                      autoFocus
+                    />
+                  ) : (
+                    <select
+                      value={clientName}
+                      onChange={e => {
+                        if (e.target.value === '__NEW__') {
+                          setIsCustomClient(true);
+                          setClientName('');
+                        } else {
+                          setClientName(e.target.value);
+                        }
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white"
+                    >
+                      <option value="">-- Select Consignor / Client --</option>
+                      {state.clients.map(c => {
+                        const cName = c.name || c.clientName || '';
+                        return (
+                          <option key={c.id} value={cName}>
+                            {cName} {c.city ? `(${c.city})` : ''}
+                          </option>
+                        );
+                      })}
+                      <option value="__NEW__">+ Type Custom Client Name...</option>
+                    </select>
+                  )}
                 </div>
 
                 <div>

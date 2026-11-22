@@ -20,7 +20,7 @@ import { DailyEntryModal } from './components/modals/DailyEntryModal';
 import { BulkImportModal } from './components/modals/BulkImportModal';
 import { loadInitialState, persistState, resetToZero, AppState } from './services/storage';
 import { JournalEntry, VoucherType } from './types/accounting';
-import { VehicleProfile, DriverProfile } from './types/fleet';
+import { VehicleProfile, DriverProfile, Client } from './types/fleet';
 
 export const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => loadInitialState());
@@ -293,6 +293,40 @@ export const App: React.FC = () => {
     setIsAddDriverOpen(false);
   };
 
+  // Add new client/consignor party
+  const handleAddClient = (newClient: Client) => {
+    setState(prev => {
+      const updatedClients = [...prev.clients, newClient];
+      let updatedAccounts = prev.accounts;
+
+      if ((newClient.openingBalance || 0) > 0) {
+        updatedAccounts = prev.accounts.map(acc => {
+          if (acc.code === '1400') {
+            return {
+              ...acc,
+              openingBalance: (acc.openingBalance || 0) + newClient.openingBalance,
+            };
+          }
+          if (acc.code === '3100') {
+            return {
+              ...acc,
+              openingBalance: (acc.openingBalance || 0) + newClient.openingBalance,
+            };
+          }
+          return acc;
+        });
+      }
+
+      const nextState: AppState = {
+        ...prev,
+        clients: updatedClients,
+        accounts: updatedAccounts,
+      };
+      persistState(nextState);
+      return nextState;
+    });
+  };
+
   // Save batch of entries from daily entry sheet
   const handleSaveDailyEntries = (entries: JournalEntry[]) => {
     setState(prev => {
@@ -474,6 +508,7 @@ export const App: React.FC = () => {
                 setIsVoucherModalOpen(true);
               }}
               onTriggerVoucherWithType={handleTriggerVoucherWithType}
+              onAddClient={handleAddClient}
             />
           )}
 

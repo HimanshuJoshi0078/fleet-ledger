@@ -1,3 +1,5 @@
+export type TruckStatus = 'ACTIVE' | 'MAINTENANCE' | 'DECOMMISSIONED';
+
 export interface VehicleProfile {
   id: string;
   plateNumber: string; // e.g. "RJ-14-GB-1001"
@@ -23,7 +25,8 @@ export interface VehicleProfile {
   roadTaxExpiryDate?: string;  // "YYYY-MM-DD"
   fastagTagId: string;
   currentOdometerKm: number;
-  operationalStatus: 'ACTIVE_TRIP' | 'LOADING' | 'UNLOADING' | 'WORKSHOP' | 'IDLE';
+  operationalStatus: 'ACTIVE' | 'MAINTENANCE' | 'DECOMMISSIONED' | 'ACTIVE_TRIP' | 'LOADING' | 'UNLOADING' | 'WORKSHOP' | 'IDLE';
+  status?: TruckStatus;
   currentRoute?: string;
 }
 
@@ -52,16 +55,23 @@ export interface FuelPumpAccount {
   currentOutstandingPayable: number;
 }
 
-export interface ClientProfile {
+export interface Client {
   id: string;
-  clientName: string;
-  gstin?: string;
-  contactPerson: string;
+  name: string;
   phone: string;
-  city: string;
-  standardPaymentTermsDays: number;
-  currentReceivableBalance: number;
+  gstin?: string;
+  address?: string;
+  openingBalance: number;
+  createdAt: string;
+  // Backward compatibility fields
+  clientName?: string;
+  city?: string;
+  contactPerson?: string;
+  standardPaymentTermsDays?: number;
+  currentReceivableBalance?: number;
 }
+
+export type ClientProfile = Client;
 
 export interface FastagWalletState {
   walletId: string;

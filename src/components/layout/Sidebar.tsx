@@ -108,9 +108,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'client_bilties' as ActiveTab,
-      label: 'Clients & Bilties (LR)',
+      label: 'Clients / Parties',
       icon: Receipt,
-      sublabel: 'Freight Receivables',
+      sublabel: 'Freight Receivables & Consignors',
     },
     {
       id: 'static_pages' as ActiveTab,

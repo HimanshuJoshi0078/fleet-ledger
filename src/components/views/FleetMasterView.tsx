@@ -10,12 +10,14 @@ import {
   CreditCard,
   FileCheck,
   Fuel,
-  Wrench
+  Wrench,
+  Pencil
 } from 'lucide-react';
 import { AppState } from '../../services/storage';
-import { VehicleProfile } from '../../types/fleet';
+import { VehicleProfile, TruckStatus } from '../../types/fleet';
 import { getComplianceAlerts, calculateFleetFuelMileage } from '../../services/accountingEngine';
 import { formatINR, formatKm, formatDate, formatKMPL } from '../../services/formatters';
+import { EditTruckModal } from '../modals/EditTruckModal';
 
 interface FleetMasterViewProps {
   state: AppState;
@@ -30,6 +32,7 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
   onUpdateVehicle,
   onOpenAddTruck,
 }) => {
+  const [editingTruckModal, setEditingTruckModal] = useState<VehicleProfile | null>(null);
   const [editingPlate, setEditingPlate] = useState<string | null>(null);
   const [editOdometer, setEditOdometer] = useState<number>(0);
   const [editStatus, setEditStatus] = useState<any>('ACTIVE_TRIP');
@@ -42,6 +45,15 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
 
   const alerts = getComplianceAlerts(state.vehicles);
   const mileageMetrics = calculateFleetFuelMileage(state.journalEntries);
+
+  const handleStatusChange = (v: VehicleProfile, newStatus: TruckStatus) => {
+    const updated: VehicleProfile = {
+      ...v,
+      operationalStatus: newStatus,
+      status: newStatus,
+    };
+    onUpdateVehicle(updated);
+  };
 
   const getDaysRemaining = (expiryDateStr?: string) => {
     if (!expiryDateStr) return null;
@@ -179,6 +191,13 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
           const pucDays = getDaysRemaining(v.pucExpiryDate);
           const roadTaxDays = getDaysRemaining(v.roadTaxExpiryDate);
           const avgKmpl = mileageMetrics.averageKmplByPlate[v.plateNumber];
+          const truckStatus: TruckStatus =
+            v.status ||
+            (v.operationalStatus === 'DECOMMISSIONED'
+              ? 'DECOMMISSIONED'
+              : v.operationalStatus === 'WORKSHOP' || v.operationalStatus === 'MAINTENANCE'
+              ? 'MAINTENANCE'
+              : 'ACTIVE');
 
           return (
             <div
@@ -187,9 +206,9 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
             >
               <div>
                 {/* Vehicle Header */}
-                <div className="bg-slate-900 text-white p-3.5 flex items-center justify-between">
+                <div className="bg-slate-900 text-white p-3.5 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 bg-blue-600 rounded text-white font-mono font-bold">
+                    <div className="p-2 bg-blue-600 rounded text-white font-mono font-bold flex-shrink-0">
                       <Truck className="w-5 h-5" />
                     </div>
                     <div>
@@ -198,9 +217,35 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
-                    {v.operationalStatus}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {/* Interactive Truck Status Selector */}
+                    <select
+                      value={truckStatus}
+                      onChange={e => handleStatusChange(v, e.target.value as TruckStatus)}
+                      className={`text-[11px] font-mono font-semibold px-2.5 py-1 rounded border cursor-pointer focus:outline-none ${
+                        truckStatus === 'ACTIVE'
+                          ? 'bg-emerald-950 text-emerald-300 border-emerald-700 hover:bg-emerald-900'
+                          : truckStatus === 'MAINTENANCE'
+                          ? 'bg-amber-950 text-amber-300 border-amber-700 hover:bg-amber-900'
+                          : 'bg-rose-950 text-rose-300 border-rose-700 hover:bg-rose-900'
+                      }`}
+                      title="Change Truck Operational Status"
+                    >
+                      <option value="ACTIVE" className="bg-slate-900 text-emerald-300">ACTIVE</option>
+                      <option value="MAINTENANCE" className="bg-slate-900 text-amber-300">MAINTENANCE</option>
+                      <option value="DECOMMISSIONED" className="bg-slate-900 text-rose-300">DECOMMISSIONED</option>
+                    </select>
+
+                    {/* Edit Truck Details Button */}
+                    <button
+                      onClick={() => setEditingTruckModal(v)}
+                      className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+                      title="Edit Truck Details"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="p-4 space-y-3.5">
@@ -614,6 +659,13 @@ export const FleetMasterView: React.FC<FleetMasterViewProps> = ({
           </div>
         )}
       </div>
+
+      <EditTruckModal
+        isOpen={!!editingTruckModal}
+        onClose={() => setEditingTruckModal(null)}
+        truck={editingTruckModal}
+        onSaveTruck={onUpdateVehicle}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Fuel,
   Plus,
@@ -29,6 +29,10 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
   onTriggerVoucherWithType,
   onSaveEntry,
 }) => {
+  const activeTrucks = state.vehicles.filter(
+    v => v.operationalStatus !== 'DECOMMISSIONED' && v.status !== 'DECOMMISSIONED'
+  );
+
   const [selectedPumpId, setSelectedPumpId] = useState<string>(
     state.pumps[0]?.id || ''
   );
@@ -36,14 +40,35 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
   // Quick Slip Inline Entry State
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
   const [quickDate, setQuickDate] = useState(new Date().toISOString().split('T')[0]);
-  const [quickPlate, setQuickPlate] = useState(state.vehicles[0]?.plateNumber || '');
+  const [quickPlate, setQuickPlate] = useState(
+    activeTrucks[0]?.plateNumber || state.vehicles[0]?.plateNumber || ''
+  );
+  const [quickPumpId, setQuickPumpId] = useState<string>(state.pumps[0]?.id || '__CUSTOM__');
+  const [quickCustomPumpName, setQuickCustomPumpName] = useState<string>('');
   const [quickLiters, setQuickLiters] = useState<number>(0);
   const [quickRate, setQuickRate] = useState<number>(90.5);
   const [quickOdometer, setQuickOdometer] = useState<string>('');
   const [quickPaymentMode, setQuickPaymentMode] = useState<'CREDIT' | 'CASH' | 'BANK'>('CREDIT');
   const [quickSlipNo, setQuickSlipNo] = useState<string>('');
 
-  const selectedPump = state.pumps.find(p => p.id === selectedPumpId);
+  useEffect(() => {
+    if (!quickPlate && activeTrucks.length > 0) {
+      setQuickPlate(activeTrucks[0].plateNumber);
+    }
+  }, [activeTrucks, quickPlate]);
+
+  useEffect(() => {
+    if (!selectedPumpId && state.pumps.length > 0) {
+      setSelectedPumpId(state.pumps[0].id);
+      setQuickPumpId(state.pumps[0].id);
+    }
+  }, [state.pumps, selectedPumpId]);
+
+  const effectivePumpId = selectedPumpId && state.pumps.some(p => p.id === selectedPumpId)
+    ? selectedPumpId
+    : (state.pumps[0]?.id || '');
+
+  const selectedPump = state.pumps.find(p => p.id === effectivePumpId);
   const pumpLedger = selectedPump
     ? calculatePumpLedger(selectedPump, state.journalEntries)
     : null;
@@ -52,37 +77,45 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
 
   // Transactions tagged to this pump
   const pumpEntries = state.journalEntries.filter(
-    e => e.pumpId === selectedPumpId
+    e => e.pumpId === effectivePumpId
   ).sort((a, b) => b.date.localeCompare(a.date));
+
+  const quickTotalAmount = Math.round(quickLiters * quickRate * 100) / 100;
 
   const handleQuickSlipSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPump || quickLiters <= 0) return;
+    if (quickLiters <= 0) return;
 
     const truckIndex = state.vehicles.findIndex(v => v.plateNumber === quickPlate);
     const safeIndex = truckIndex >= 0 ? truckIndex : 0;
     const suffix = String(safeIndex + 1).padStart(2, '0');
-    const totalAmount = Math.round(quickLiters * quickRate * 100) / 100;
+    const totalAmount = quickTotalAmount;
+
+    const isCustom = quickPumpId === '__CUSTOM__';
+    const targetPump = state.pumps.find(p => p.id === quickPumpId);
+    const pumpName = isCustom ? (quickCustomPumpName.trim() || 'Direct Fuel Vendor') : (targetPump?.pumpName || 'Fuel Pump');
 
     const voucherNumber = generateNextVoucherNumber('DS', state.journalEntries.length + 1);
     const fuelExpCode = `51${suffix}`;
-    const crCode =
-      quickPaymentMode === 'CASH'
-        ? '1100'
-        : quickPaymentMode === 'BANK'
-        ? '1200'
-        : selectedPump.id === 'PUMP-01'
-        ? '2201'
-        : selectedPump.id === 'PUMP-02'
-        ? '2202'
-        : `22${suffix}`;
+    
+    let crCode = '2200';
+    let crName = `Fuel Credit Payable (${pumpName})`;
 
-    const crName =
-      quickPaymentMode === 'CASH'
-        ? 'Cash in Hand (Fleet Operational Cash)'
-        : quickPaymentMode === 'BANK'
-        ? 'Bank Fleet Current A/c'
-        : `Fuel Credit Payable (${selectedPump.pumpName})`;
+    if (quickPaymentMode === 'CASH') {
+      crCode = '1100';
+      crName = 'Cash in Hand (Fleet Operational Cash)';
+    } else if (quickPaymentMode === 'BANK') {
+      crCode = '1200';
+      crName = 'Bank Fleet Current A/c';
+    } else if (targetPump) {
+      if (targetPump.id === 'PUMP-01') crCode = '2201';
+      else if (targetPump.id === 'PUMP-02') crCode = '2202';
+      else {
+        const pIndex = state.pumps.findIndex(p => p.id === targetPump.id);
+        crCode = `22${String(pIndex + 1).padStart(2, '0')}`;
+      }
+      crName = `Fuel Credit Payable (${targetPump.pumpName})`;
+    }
 
     const newEntry: JournalEntry = {
       id: `VR-${Date.now()}-PUMP-FUEL`,
@@ -90,9 +123,9 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
       date: quickDate,
       voucherType: 'DIESEL_SLIP',
       vehiclePlate: quickPlate,
-      pumpId: selectedPump.id,
+      pumpId: isCustom ? undefined : targetPump?.id,
       referenceNumber: quickSlipNo || undefined,
-      narration: `Diesel fuel filled for ${quickPlate}: ${quickLiters} Ltr @ ₹${quickRate}/Ltr at ${selectedPump.pumpName} [${quickPaymentMode}]`,
+      narration: `Diesel fuel filled for ${quickPlate}: ${quickLiters} Ltr @ ₹${quickRate}/Ltr at ${pumpName} [${quickPaymentMode}]`,
       lines: [
         {
           accountCode: fuelExpCode,
@@ -120,6 +153,11 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
     if (onSaveEntry) {
       onSaveEntry(newEntry);
     }
+
+    if (targetPump) {
+      setSelectedPumpId(targetPump.id);
+    }
+
     setQuickLiters(0);
     setQuickOdometer('');
     setQuickSlipNo('');
@@ -149,32 +187,221 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
         </button>
       </div>
 
-      {/* Pump Selector Tabs */}
-      <div className="flex gap-2 border-b border-slate-300 pb-2 overflow-x-auto">
-        {state.pumps.map(p => {
-          const ldg = calculatePumpLedger(p, state.journalEntries);
-          const isSelected = selectedPumpId === p.id;
-          return (
-            <button
-              key={p.id}
-              onClick={() => setSelectedPumpId(p.id)}
-              className={`px-4 py-2 min-h-[42px] text-xs font-bold rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ${
-                isSelected
-                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-              }`}
-            >
-              <Fuel className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <span>{p.pumpName.split('(')[0]}</span>
-              <span className="font-mono text-[10px] bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded font-normal">
-                {p.oilCompany}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      {/* Inline Fuel Slip Entry Form - Positioned directly below Header Banner */}
+      {isQuickEntryOpen && (
+        <div className="bg-white rounded-lg border border-amber-300 shadow-sm p-4 text-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-amber-200 pb-2 gap-1">
+            <div className="flex items-center gap-2 font-bold text-slate-900">
+              <Fuel className="w-4 h-4 text-amber-600" />
+              <span>Direct Fuel Slip Entry</span>
+            </div>
+            <span className="font-mono text-xs font-bold text-rose-700">
+              Total Fuel Amount: {formatINR(quickTotalAmount)}
+            </span>
+          </div>
 
-      {selectedPump && pumpLedger && (
+          <form onSubmit={handleQuickSlipSubmit} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Date</label>
+                <input
+                  type="date"
+                  value={quickDate}
+                  onChange={e => setQuickDate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Commercial Truck</label>
+                <select
+                  value={quickPlate}
+                  onChange={e => setQuickPlate(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white font-mono"
+                  required
+                >
+                  {activeTrucks.length === 0 ? (
+                    state.vehicles.map(v => (
+                      <option key={v.plateNumber} value={v.plateNumber}>
+                        {v.plateNumber}
+                      </option>
+                    ))
+                  ) : (
+                    activeTrucks.map(v => {
+                      const isMaint = v.operationalStatus === 'MAINTENANCE' || v.status === 'MAINTENANCE';
+                      return (
+                        <option key={v.plateNumber} value={v.plateNumber}>
+                          {v.plateNumber} {isMaint ? '(In Maintenance)' : ''}
+                        </option>
+                      );
+                    })
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Fuel Pump / Vendor</label>
+                <select
+                  value={quickPumpId}
+                  onChange={e => {
+                    setQuickPumpId(e.target.value);
+                    if (e.target.value !== '__CUSTOM__') {
+                      setSelectedPumpId(e.target.value);
+                    }
+                  }}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white font-medium"
+                >
+                  {state.pumps.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.pumpName.split('(')[0].trim()} ({p.oilCompany})
+                    </option>
+                  ))}
+                  <option value="__CUSTOM__">+ Other / Independent Pump Vendor</option>
+                </select>
+                {quickPumpId === '__CUSTOM__' && (
+                  <input
+                    type="text"
+                    placeholder="Pump / Vendor Name"
+                    value={quickCustomPumpName}
+                    onChange={e => setQuickCustomPumpName(e.target.value)}
+                    className="w-full mt-1.5 px-2.5 py-1 rounded border border-slate-300 text-xs bg-white"
+                    required
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Payment Mode</label>
+                <select
+                  value={quickPaymentMode}
+                  onChange={e => setQuickPaymentMode(e.target.value as any)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white"
+                >
+                  <option value="CREDIT">Pump Credit (Payable to Pump)</option>
+                  <option value="CASH">Cash in Hand (Fleet Operational Cash)</option>
+                  <option value="BANK">Bank Fleet Current A/c</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Liters Pumped</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  placeholder="0.0"
+                  value={quickLiters || ''}
+                  onChange={e => setQuickLiters(parseFloat(e.target.value) || 0)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Rate / Liter (₹)</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="1"
+                  value={quickRate}
+                  onChange={e => setQuickRate(parseFloat(e.target.value) || 0)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Odometer (KM, Optional)</label>
+                <input
+                  type="number"
+                  step="1"
+                  placeholder="e.g. 148500"
+                  value={quickOdometer}
+                  onChange={e => setQuickOdometer(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-[11px] font-semibold mb-0.5">Slip Reference # (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. SLIP-84920"
+                  value={quickSlipNo}
+                  onChange={e => setQuickSlipNo(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-2 pt-2 border-t border-slate-200">
+              <div className="text-slate-600 text-xs font-mono">
+                {quickLiters > 0 ? (
+                  <span>
+                    Calculation: {quickLiters} Ltr &times; ₹{quickRate}/Ltr = <span className="font-bold text-slate-900">{formatINR(quickTotalAmount)}</span>
+                  </span>
+                ) : (
+                  <span>Enter liters and rate to calculate slip amount</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setIsQuickEntryOpen(false)}
+                  className="px-3.5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded text-xs min-h-[42px] w-full sm:w-auto transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded text-xs min-h-[42px] w-full sm:w-auto shadow-sm transition-colors"
+                >
+                  Save Fuel Slip
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Pump Selector Tabs */}
+      {state.pumps.length > 0 && (
+        <div className="flex gap-2 border-b border-slate-300 pb-2 overflow-x-auto">
+          {state.pumps.map(p => {
+            const isSelected = effectivePumpId === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => setSelectedPumpId(p.id)}
+                className={`px-4 py-2 min-h-[42px] text-xs font-bold rounded-lg border transition-colors flex items-center gap-2 whitespace-nowrap ${
+                  isSelected
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                <Fuel className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span>{p.pumpName.split('(')[0]}</span>
+                <span className="font-mono text-[10px] bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded font-normal">
+                  {p.oilCompany}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {state.pumps.length === 0 ? (
+        <div className="bg-white rounded-lg border border-slate-300 p-8 text-center space-y-3">
+          <Fuel className="w-10 h-10 text-slate-400 mx-auto" />
+          <h3 className="text-sm font-bold text-slate-800">No Fuel Pump Accounts Registered</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            You can record diesel purchases using the &quot;New Fuel Slip&quot; form above.
+          </p>
+        </div>
+      ) : selectedPump && pumpLedger ? (
         <div className="space-y-4">
           {/* Pump Master Card */}
           <div className="bg-white rounded-lg border border-slate-300 shadow-sm p-4 text-xs space-y-3">
@@ -199,7 +426,7 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
                   className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded border border-slate-700 font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 min-h-[42px] w-full sm:w-auto whitespace-nowrap"
                 >
                   <Plus className="w-4 h-4 flex-shrink-0" />
-                  <span>{isQuickEntryOpen ? 'Hide Entry Form' : 'Add Fuel Slip'}</span>
+                  <span>{isQuickEntryOpen ? 'Close Slip Form' : 'Add Fuel Slip'}</span>
                 </button>
 
                 <button
@@ -262,127 +489,6 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
             </div>
           </div>
 
-          {/* Direct Fuel Slip Entry Form */}
-          {isQuickEntryOpen && (
-            <div className="bg-white rounded-lg border border-amber-300 shadow-sm p-4 text-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-amber-200 pb-2">
-                <div className="flex items-center gap-2 font-bold text-slate-900">
-                  <Fuel className="w-4 h-4 text-amber-600" />
-                  <span>Direct Fuel Slip Entry : {selectedPump.pumpName}</span>
-                </div>
-                <span className="font-mono text-xs font-bold text-rose-700">
-                  Total Fuel: {formatINR(quickLiters * quickRate)}
-                </span>
-              </div>
-
-              <form onSubmit={handleQuickSlipSubmit} className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
-                  <div>
-                    <label className="block text-slate-700 text-[11px] mb-0.5">Date</label>
-                    <input
-                      type="date"
-                      value={quickDate}
-                      onChange={e => setQuickDate(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 text-[11px] mb-0.5">Commercial Truck</label>
-                    <select
-                      value={quickPlate}
-                      onChange={e => setQuickPlate(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white font-mono"
-                      required
-                    >
-                      {state.vehicles.map(v => (
-                        <option key={v.plateNumber} value={v.plateNumber}>
-                          {v.plateNumber}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 text-[11px] mb-0.5">Liters Pumped</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      placeholder="0"
-                      value={quickLiters || ''}
-                      onChange={e => setQuickLiters(parseFloat(e.target.value) || 0)}
-                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 text-[11px] mb-0.5">Rate / Liter (₹)</label>
-                    <input
-                      type="number"
-                      step="0.05"
-                      value={quickRate}
-                      onChange={e => setQuickRate(parseFloat(e.target.value) || 0)}
-                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 text-[11px] mb-0.5">Odometer (KM)</label>
-                    <input
-                      type="number"
-                      step="1"
-                      placeholder="e.g. 148500"
-                      value={quickOdometer}
-                      onChange={e => setQuickOdometer(e.target.value)}
-                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 text-[11px] mb-0.5">Payment Mode</label>
-                    <select
-                      value={quickPaymentMode}
-                      onChange={e => setQuickPaymentMode(e.target.value as any)}
-                      className="w-full px-2.5 py-1.5 rounded border border-slate-300 text-xs bg-white"
-                    >
-                      <option value="CREDIT">Pump Credit (Payable to Pump)</option>
-                      <option value="CASH">Cash in Hand</option>
-                      <option value="BANK">Bank Transfer / Card</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-2 border-t border-slate-200">
-                  <input
-                    type="text"
-                    placeholder="Slip / Receipt # (optional, e.g. SLIP-84920)"
-                    value={quickSlipNo}
-                    onChange={e => setQuickSlipNo(e.target.value)}
-                    className="w-full sm:w-72 px-2.5 py-1.5 rounded border border-slate-300 font-mono text-xs bg-white"
-                  />
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      onClick={() => setIsQuickEntryOpen(false)}
-                      className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded text-xs min-h-[38px] w-full sm:w-auto"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded text-xs min-h-[38px] w-full sm:w-auto"
-                    >
-                      Save Fuel Slip
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          )}
-
           {/* Pump Slips and Payments Table */}
           <div className="bg-white rounded-lg border border-slate-300 shadow-sm overflow-hidden text-xs">
             <div className="bg-slate-900 text-white p-3 font-semibold flex items-center justify-between">
@@ -417,8 +523,8 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
                     pumpEntries.map(entry => {
                       const isFuelSlip = entry.voucherType === 'DIESEL_SLIP';
                       const isSettlement = entry.voucherType === 'PUMP_SETTLEMENT';
-                      const fuelAmount = entry.lines.find(l => l.accountCode.startsWith('510'))?.debit || 0;
-                      const paidAmount = entry.lines.find(l => l.accountCode.startsWith('220'))?.debit || 0;
+                      const fuelAmount = entry.lines.find(l => l.accountCode.startsWith('51'))?.debit || 0;
+                      const paidAmount = entry.lines.find(l => l.accountCode.startsWith('22'))?.debit || 0;
                       const mileageMetric = mileageMetrics.metricsByEntryId[entry.id];
 
                       return (
@@ -469,8 +575,7 @@ export const FuelPumpHubView: React.FC<FuelPumpHubViewProps> = ({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
-

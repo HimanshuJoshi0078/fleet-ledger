@@ -589,9 +589,15 @@ export function calculateClientLedger(
   let totalFreightBilled = 0;
   let totalPaymentsCollected = 0;
   let totalMTTransported = 0;
+  const clientNameLower = (client.name || client.clientName || '').toLowerCase().trim();
 
   for (const entry of entries) {
-    if (entry.clientId === client.id) {
+    const isMatched =
+      entry.clientId === client.id ||
+      (clientNameLower && entry.metadata?.clientName && entry.metadata.clientName.toLowerCase().trim() === clientNameLower) ||
+      (clientNameLower && entry.narration && entry.narration.toLowerCase().includes(`client ${clientNameLower}`));
+
+    if (isMatched) {
       if (entry.voucherType === 'FREIGHT_BILL') {
         const line = entry.lines.find(l => l.accountCode === '1400' && l.debit > 0);
         if (line) totalFreightBilled += line.debit;
@@ -603,10 +609,11 @@ export function calculateClientLedger(
     }
   }
 
-  const currentBalance = client.currentReceivableBalance + totalFreightBilled - totalPaymentsCollected;
+  const opening = typeof client.openingBalance === 'number' ? client.openingBalance : (client.currentReceivableBalance || 0);
+  const currentBalance = opening + totalFreightBilled - totalPaymentsCollected;
 
   return {
-    openingBalance: client.currentReceivableBalance,
+    openingBalance: opening,
     totalFreightBilled,
     totalPaymentsCollected,
     currentBalance,
